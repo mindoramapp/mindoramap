@@ -98,7 +98,7 @@ function LoginPage() {
 
   return (
     <div className="relative isolate min-h-dvh grid place-items-center px-4 overflow-hidden">
-      {/* Background looping animation */}
+      {/* Background looping animation (a glowing network on black; inverted on the light theme) */}
       <div className="pointer-events-none absolute inset-0 -z-20 overflow-hidden">
         <video
           autoPlay
@@ -107,7 +107,7 @@ function LoginPage() {
           playsInline
           preload="auto"
           className={`h-full w-full object-cover transition-opacity duration-700 ${
-            theme === "dark" ? "opacity-60" : "opacity-80 contrast-110 saturate-110"
+            theme === "dark" ? "opacity-60" : "opacity-45 invert hue-rotate-180 saturate-150"
           }`}
         >
           <source src={`${import.meta.env.BASE_URL}mapa_mind_one.mp4`} type="video/mp4" />
@@ -119,7 +119,7 @@ function LoginPage() {
         className={`pointer-events-none absolute inset-0 -z-10 ${
           theme === "dark"
             ? "bg-slate-950/60"
-            : "bg-[radial-gradient(ellipse_at_center,transparent_0%,rgba(248,249,252,0.30)_50%,rgba(248,249,252,0.60)_100%)]"
+            : "bg-[radial-gradient(ellipse_at_center,rgba(248,249,252,0.35)_0%,rgba(248,249,252,0.55)_50%,rgba(248,249,252,0.8)_100%)]"
         }`}
       />
       <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top,oklch(0.58_0.17_258/0.20),transparent_70%)]" />
