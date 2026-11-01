@@ -200,7 +200,7 @@ const normalizeLocalMap = (map: Partial<MindMap>, owner: MapOwner): MindMap => {
     id: map.id || crypto.randomUUID(),
     ownerId,
     ownerEmail,
-    title: map.title || "Sem titulo",
+    title: map.title || "Sem título",
     folderId: map.folderId || null,
     parentMapId: map.parentMapId || null,
     isFavorite: Boolean(map.isFavorite),
