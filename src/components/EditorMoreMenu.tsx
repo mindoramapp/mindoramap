@@ -1,52 +1,47 @@
-// Compact-screen menu for the editor toolbar: everything that doesn't fit next to undo/redo on
-// phones and portrait tablets, in touch-sized rows.
+// The editor's single "⋯" menu, on every screen size: the occasional actions (export, panels,
+// centering, help) live here so the toolbar only carries what is used while editing.
 import { useEffect, useRef, useState } from "react";
 import {
   Braces,
+  Check,
+  CircleHelp,
   Crosshair,
   FileText,
-  GitBranch,
-  GraduationCap,
   Image,
-  Link2,
+  Map as MiniMapIcon,
   MoreHorizontal,
-  Palette,
-  Network,
   Shapes,
-  Wand2,
+  SlidersHorizontal,
 } from "lucide-react";
 import type { ExportFormat } from "@/lib/export";
-import { useThemePanel } from "@/features/editor/themeStore";
+import type { PanelId } from "@/features/editor/panelLayout";
+import { useEditorPanels } from "@/features/editor/panelsStore";
 
-interface Props {
-  view: "tree" | "graph";
-  onViewChange: (view: "tree" | "graph") => void;
-  connectMode: boolean;
-  onToggleConnect: () => void;
-  onOrganize: () => void;
-  onReview: () => void;
-}
+const EXPORTS: { format: ExportFormat; label: string; hint: string; icon: React.ReactNode }[] = [
+  { format: "png", label: "Imagem PNG", hint: "Para apresentações", icon: <Image size={16} /> },
+  { format: "svg", label: "Imagem SVG", hint: "Vetorial, sem perda", icon: <Shapes size={16} /> },
+  { format: "markdown", label: "Markdown", hint: "Tópicos em lista", icon: <FileText size={16} /> },
+  {
+    format: "json",
+    label: "Mindora JSON",
+    hint: "Backup reimportável",
+    icon: <Braces size={16} />,
+  },
+];
 
-const EXPORTS: { format: ExportFormat; label: string; icon: React.ReactNode }[] = [
-  { format: "png", label: "Exportar PNG", icon: <Image size={16} /> },
-  { format: "svg", label: "Exportar SVG", icon: <Shapes size={16} /> },
-  { format: "markdown", label: "Exportar Markdown", icon: <FileText size={16} /> },
-  { format: "json", label: "Exportar JSON", icon: <Braces size={16} /> },
+const PANELS: { id: PanelId; label: string; icon: React.ReactNode }[] = [
+  { id: "inspector", label: "Propriedades", icon: <SlidersHorizontal size={16} /> },
+  { id: "minimap", label: "Minimapa", icon: <MiniMapIcon size={16} /> },
 ];
 
 const ITEM =
-  "flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm hover:bg-muted";
+  "flex min-h-10 w-full items-center gap-3 rounded-lg px-3 text-left text-sm hover:bg-muted pointer-coarse:min-h-11";
+const SECTION = "px-3 pb-1 pt-2 text-xs font-medium text-muted-foreground";
 
-export function EditorMoreMenu({
-  view,
-  onViewChange,
-  connectMode,
-  onToggleConnect,
-  onOrganize,
-  onReview,
-}: Props) {
+export function EditorMoreMenu() {
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
+  const visible = useEditorPanels((state) => state.visible);
 
   useEffect(() => {
     if (!open) return;
@@ -76,6 +71,7 @@ export function EditorMoreMenu({
         onClick={() => setOpen((value) => !value)}
         className={`grid h-9 w-9 place-items-center rounded-lg pointer-coarse:h-11 pointer-coarse:w-11 ${open ? "bg-muted" : "hover:bg-muted"}`}
         aria-label="Mais ações"
+        title="Exportar, painéis e ajuda"
         aria-haspopup="menu"
         aria-expanded={open}
       >
@@ -87,63 +83,7 @@ export function EditorMoreMenu({
           role="menu"
           className="absolute right-0 top-full z-50 mt-2 max-h-[calc(100dvh-5rem)] w-64 overflow-y-auto rounded-xl border border-border bg-card p-1.5 shadow-lg"
         >
-          <div
-            className="mb-1 grid grid-cols-2 gap-1 rounded-lg bg-muted p-1"
-            role="group"
-            aria-label="Visão"
-          >
-            {(
-              [
-                ["tree", "Árvore", <GitBranch key="t" size={16} />],
-                ["graph", "Grafo", <Network key="g" size={16} />],
-              ] as const
-            ).map(([value, label, icon]) => (
-              <button
-                key={value}
-                type="button"
-                role="menuitemradio"
-                aria-checked={view === value}
-                onClick={run(() => onViewChange(value))}
-                className={`flex min-h-10 items-center justify-center gap-1.5 rounded-md text-sm ${view === value ? "bg-card font-medium shadow-sm" : "text-muted-foreground"}`}
-              >
-                {icon} {label}
-              </button>
-            ))}
-          </div>
-
-          <button
-            type="button"
-            role="menuitemcheckbox"
-            aria-checked={connectMode}
-            onClick={run(onToggleConnect)}
-            className={ITEM}
-          >
-            <Link2 size={16} /> {connectMode ? "Sair do modo conexão" : "Conectar nós"}
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={run(() => useThemePanel.getState().toggle())}
-            className={ITEM}
-          >
-            <Palette size={16} /> Aparência (temas e cores)
-          </button>
-          <button type="button" role="menuitem" onClick={run(onOrganize)} className={ITEM}>
-            <Wand2 size={16} /> Organizar automaticamente
-          </button>
-          <button type="button" role="menuitem" onClick={run(onReview)} className={ITEM}>
-            <GraduationCap size={16} /> Revisar com cartões
-          </button>
-          <button
-            type="button"
-            role="menuitem"
-            onClick={run(() => window.dispatchEvent(new Event("mm-center")))}
-            className={ITEM}
-          >
-            <Crosshair size={16} /> Centralizar mapa
-          </button>
-
-          <div className="my-1 h-px bg-border" />
+          <p className={SECTION}>Exportar</p>
           {EXPORTS.map((item) => (
             <button
               key={item.format}
@@ -156,9 +96,55 @@ export function EditorMoreMenu({
               )}
               className={ITEM}
             >
-              <span className="text-muted-foreground">{item.icon}</span> {item.label}
+              <span className="text-muted-foreground">{item.icon}</span>
+              <span className="flex-1">{item.label}</span>
+              <span className="text-xs text-muted-foreground">{item.hint}</span>
             </button>
           ))}
+
+          <div className="my-1 h-px bg-border" />
+          <p className={SECTION}>Painéis</p>
+          {PANELS.map((panel) => (
+            <button
+              key={panel.id}
+              type="button"
+              role="menuitemcheckbox"
+              aria-checked={visible[panel.id]}
+              onClick={() => useEditorPanels.getState().set(panel.id, (value) => !value)}
+              className={ITEM}
+            >
+              <span className="text-muted-foreground">{panel.icon}</span>
+              <span className="flex-1">{panel.label}</span>
+              {visible[panel.id] && <Check size={15} className="text-primary" />}
+            </button>
+          ))}
+          <button
+            type="button"
+            role="menuitem"
+            onClick={run(() => useEditorPanels.getState().reset())}
+            className={`${ITEM} text-muted-foreground`}
+          >
+            <span className="w-4" aria-hidden />
+            Reorganizar painéis
+          </button>
+
+          <div className="my-1 h-px bg-border" />
+          <button
+            type="button"
+            role="menuitem"
+            onClick={run(() => window.dispatchEvent(new Event("mm-center")))}
+            className={ITEM}
+          >
+            <Crosshair size={16} className="text-muted-foreground" /> Centralizar mapa
+          </button>
+          <button
+            type="button"
+            role="menuitem"
+            onClick={run(() => window.dispatchEvent(new Event("mm-help")))}
+            className={ITEM}
+          >
+            <CircleHelp size={16} className="text-muted-foreground" /> Atalhos e ajuda
+          </button>
         </div>
       )}
     </div>

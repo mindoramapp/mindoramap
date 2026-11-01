@@ -1,16 +1,13 @@
-// Top header with theme + auth controls. On narrow screens the account actions collapse into a
-// single menu so page content (e.g. the editor toolbar) keeps the room it needs.
+// Top header: logo, the page's own content and one account menu (plans, theme, admin, sign out),
+// so page content (e.g. the editor toolbar) keeps the room it needs.
 import { useEffect, useRef, useState } from "react";
 import { Link, useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/store/auth";
 import { useUsageTracker } from "@/hooks/useUsageTracker";
 import { useTheme } from "@/hooks/useTheme";
-import { LogOut, Brain, Crown, Download, Home, Moon, Shield, Sun } from "lucide-react";
+import { LogOut, Brain, Crown, Download, FolderOpen, Home, Moon, Shield, Sun } from "lucide-react";
 import { useInstallPrompt } from "@/features/pwa/installPrompt";
-import { ThemeToggle } from "@/components/ThemeToggle";
 
-const ICON_BUTTON =
-  "grid h-9 w-9 shrink-0 place-items-center rounded-lg transition-colors hover:bg-muted pointer-coarse:h-11 pointer-coarse:w-11";
 const MENU_ITEM =
   "flex min-h-11 w-full items-center gap-3 rounded-lg px-3 text-left text-sm hover:bg-muted";
 
@@ -41,49 +38,8 @@ export function Header({ children }: { children?: React.ReactNode }) {
         {children}
       </div>
 
-      {/* Wide screens: individual buttons. */}
-      <div className="hidden items-center gap-1 sm:flex">
-        {user && (
-          <Link
-            to="/plans"
-            className="inline-flex h-9 shrink-0 items-center gap-1.5 rounded-lg px-2.5 text-sm font-medium hover:bg-muted pointer-coarse:h-11"
-            title="Planos"
-          >
-            <Crown size={16} className="text-primary" />
-            <span className="hidden lg:inline">Planos</span>
-          </Link>
-        )}
-        <Link to="/" className={ICON_BUTTON} aria-label="Página inicial" title="Página inicial">
-          <Home size={18} />
-        </Link>
-        <ThemeToggle
-          compact
-          className="h-9 w-9 rounded-lg border-0 bg-transparent hover:bg-muted pointer-coarse:h-11 pointer-coarse:w-11"
-        />
-        {user?.role === "superadmin" && (
-          <Link
-            to="/admin"
-            className={ICON_BUTTON}
-            aria-label="Painel de superadmin"
-            title="Painel de superadmin"
-          >
-            <Shield size={18} />
-          </Link>
-        )}
-        {user && (
-          <>
-            <span className="hidden max-w-40 truncate text-sm text-muted-foreground md:inline">
-              {user.name}
-            </span>
-            <button onClick={signOut} className={ICON_BUTTON} aria-label="Sair" title="Sair">
-              <LogOut size={18} />
-            </button>
-          </>
-        )}
-      </div>
-
-      {/* Phones: one account menu. */}
-      <div className="sm:hidden">
+      {/* Account, plans, theme and admin live in one menu, so the bar stays for the page. */}
+      <div className="shrink-0">
         <AccountMenu
           name={user?.name}
           isAdmin={user?.role === "superadmin"}
@@ -127,8 +83,9 @@ function AccountMenu({
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
-        className="grid h-11 w-11 place-items-center rounded-full"
+        className="grid h-11 w-11 place-items-center rounded-full hover:bg-muted"
         aria-label="Menu da conta"
+        title="Conta, planos e tema"
         aria-haspopup="menu"
         aria-expanded={open}
       >
@@ -142,9 +99,16 @@ function AccountMenu({
           className="absolute right-0 top-full z-50 mt-2 w-56 rounded-xl border border-border bg-card p-1.5 shadow-lg"
         >
           {name && <p className="truncate px-3 py-2 text-xs text-muted-foreground">{name}</p>}
-          <Link to="/" role="menuitem" className={MENU_ITEM} onClick={() => setOpen(false)}>
-            <Home size={16} /> Página inicial
-          </Link>
+          {onSignOut && (
+            <Link
+              to="/dashboard"
+              role="menuitem"
+              className={MENU_ITEM}
+              onClick={() => setOpen(false)}
+            >
+              <FolderOpen size={16} /> Meus mapas
+            </Link>
+          )}
           {onSignOut && (
             <Link to="/plans" role="menuitem" className={MENU_ITEM} onClick={() => setOpen(false)}>
               <Crown size={16} /> Planos
@@ -167,6 +131,9 @@ function AccountMenu({
               <Download size={16} /> Instalar app
             </button>
           )}
+          <Link to="/" role="menuitem" className={MENU_ITEM} onClick={() => setOpen(false)}>
+            <Home size={16} /> Página inicial
+          </Link>
           {isAdmin && (
             <Link to="/admin" role="menuitem" className={MENU_ITEM} onClick={() => setOpen(false)}>
               <Shield size={16} /> Painel admin

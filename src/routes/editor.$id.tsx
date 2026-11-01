@@ -2,16 +2,18 @@ import { createFileRoute, useNavigate, useParams } from "@tanstack/react-router"
 import { useEffect, useRef, useState } from "react";
 import { useAuth } from "@/store/auth";
 import { Header } from "@/components/Header";
-import { MindMapEditor } from "@/components/MindMapEditor";
+import { MindMapEditor, type SaveStatus } from "@/components/MindMapEditor";
 import { getMap, type MindMap } from "@/store/maps";
 import { withNewerDraft } from "@/features/editor/draftBackup";
 import { toast } from "sonner";
 import {
   ArrowLeft,
   Brain,
+  Check,
+  CloudOff,
   GitBranch,
+  Loader2,
   Network,
-  Crosshair,
   Link2,
   Wand2,
   Undo2,
@@ -20,9 +22,7 @@ import {
   Palette,
 } from "lucide-react";
 import { OnboardingTour } from "@/components/OnboardingTour";
-import { ExportMenu } from "@/components/ExportMenu";
 import { EditorMoreMenu } from "@/components/EditorMoreMenu";
-import { PanelsMenu } from "@/components/PanelsMenu";
 import { useThemePanel } from "@/features/editor/themeStore";
 import { useEntitlements } from "@/features/subscriptions";
 import { isOnboardingDone, resetOnboarding } from "@/lib/onboarding";
@@ -33,12 +33,77 @@ function AppearanceButton() {
     <button
       onClick={() => useThemePanel.getState().toggle()}
       aria-pressed={open}
-      className={`h-8 px-3 rounded-full text-sm flex items-center justify-center gap-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 ${open ? "bg-primary/10 text-primary" : "hover:bg-muted"}`}
+      className={`h-8 px-2.5 shrink-0 rounded-full text-sm flex items-center justify-center gap-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11 ${open ? "bg-primary/10 text-primary" : "hover:bg-muted"}`}
       title="Aparência: temas, cores de balões e linhas"
       aria-label="Aparência"
     >
-      <Palette size={14} /> <span className="hidden sm:inline">Aparência</span>
+      <Palette size={14} /> <span className="hidden lg:inline">Aparência</span>
     </button>
+  );
+}
+
+/** Map title in the header; click to rename (Enter saves, Esc cancels). */
+function MapTitle({ title, onRename }: { title: string; onRename: (title: string) => void }) {
+  const [editing, setEditing] = useState(false);
+  const [draft, setDraft] = useState(title);
+
+  const commit = () => {
+    setEditing(false);
+    const next = draft.trim();
+    if (next && next !== title) onRename(next);
+  };
+
+  if (editing) {
+    return (
+      <input
+        autoFocus
+        value={draft}
+        maxLength={120}
+        onChange={(event) => setDraft(event.target.value)}
+        onBlur={commit}
+        onKeyDown={(event) => {
+          if (event.key === "Enter") commit();
+          if (event.key === "Escape") setEditing(false);
+        }}
+        aria-label="Nome do mapa"
+        className="min-w-0 max-w-xs flex-1 rounded-lg border border-border bg-background px-2 py-1 font-semibold outline-none focus:ring-2 focus:ring-ring"
+      />
+    );
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={() => {
+        setDraft(title);
+        setEditing(true);
+      }}
+      className="min-w-0 truncate rounded-lg px-1.5 py-1 text-left font-semibold hover:bg-muted pointer-coarse:min-h-11"
+      title="Renomear mapa"
+    >
+      {title}
+    </button>
+  );
+}
+
+/** Tells whether the latest change already reached the server. */
+function SaveIndicator({ status }: { status: SaveStatus }) {
+  const content = {
+    saving: { icon: <Loader2 size={14} className="animate-spin" />, label: "Salvando…" },
+    saved: { icon: <Check size={14} />, label: "Salvo" },
+    local: { icon: <CloudOff size={14} />, label: "Sem conexão: guardado neste aparelho" },
+  }[status];
+  return (
+    <span
+      role="status"
+      title={content.label}
+      className={`flex shrink-0 items-center gap-1 text-xs ${status === "local" ? "text-amber-600 dark:text-amber-400" : "text-muted-foreground"}`}
+    >
+      {content.icon}
+      <span className={status === "local" ? "hidden md:inline" : "hidden sm:inline"}>
+        {content.label}
+      </span>
+    </span>
   );
 }
 
@@ -46,12 +111,6 @@ export const Route = createFileRoute("/editor/$id")({
   head: () => ({ meta: [{ title: "Editor - Mindora" }] }),
   component: EditorPage,
 });
-
-const MODE_LABEL: Record<string, string> = {
-  study: "Estudo",
-  brainstorm: "Brainstorm",
-  project: "Projeto",
-};
 
 function EditorPage() {
   const { id } = useParams({ from: "/editor/$id" });
@@ -66,6 +125,7 @@ function EditorPage() {
   const [undoSignal, setUndoSignal] = useState(0);
   const [redoSignal, setRedoSignal] = useState(0);
   const [history, setHistory] = useState({ canUndo: false, canRedo: false });
+  const [saveStatus, setSaveStatus] = useState<SaveStatus>("saved");
   const [showTour, setShowTour] = useState(false);
   const tourScheduledRef = useRef(false);
 
@@ -186,10 +246,14 @@ function EditorPage() {
     );
   }
 
+  const toolButton = (active = false) =>
+    `h-8 px-2.5 rounded-full text-sm flex items-center justify-center gap-1.5 transition-colors pointer-coarse:min-h-11 pointer-coarse:min-w-11 ${
+      active ? "bg-primary text-primary-foreground" : "hover:bg-muted"
+    }`;
+
   return (
     <div className="h-dvh flex flex-col">
       <Header>
-        <h1 className="min-w-0 truncate font-semibold">{map.title}</h1>
         {map.parentMapId && (
           <button
             onClick={() => navigate({ to: "/editor/$id", params: { id: map.parentMapId! } })}
@@ -200,89 +264,31 @@ function EditorPage() {
             <ArrowLeft size={14} /> <span className="hidden md:inline">Voltar</span>
           </button>
         )}
-        <span className="hidden 2xl:inline shrink-0 text-[10px] uppercase tracking-wider px-2 py-0.5 rounded-full bg-accent text-accent-foreground">
-          {MODE_LABEL[map.mode] || "Brainstorm"}
-        </span>
+        <MapTitle title={map.title} onRename={(title) => setMap({ ...map, title })} />
+        <SaveIndicator status={saveStatus} />
 
-        {/* Wide screens: full toolbar. Labels collapse to icons below xl. */}
-        <div className="ml-auto hidden lg:flex items-center gap-1 bg-muted rounded-lg p-1">
-          <button
-            onClick={() => setView("tree")}
-            className={`px-3 py-1.5 rounded-md text-sm flex items-center justify-center gap-1.5 transition pointer-coarse:min-h-11 pointer-coarse:min-w-11 ${view === "tree" ? "bg-card shadow-sm" : "text-muted-foreground"}`}
-            title="Visão em árvore"
-          >
-            <GitBranch size={14} /> <span className="hidden xl:inline">Árvore</span>
-          </button>
-          <button
-            onClick={() => setView("graph")}
-            className={`px-3 py-1.5 rounded-md text-sm flex items-center justify-center gap-1.5 transition pointer-coarse:min-h-11 pointer-coarse:min-w-11 ${view === "graph" ? "bg-card shadow-sm" : "text-muted-foreground"}`}
-            title="Visão em grafo"
-          >
-            <Network size={14} /> <span className="hidden xl:inline">Grafo</span>
-          </button>
-        </div>
-
-        <button
-          onClick={() => setConnectMode(!connectMode)}
-          className={`hidden lg:flex px-3 py-1.5 rounded-lg text-sm items-center justify-center gap-1.5 transition-colors pointer-coarse:min-h-11 pointer-coarse:min-w-11 ${
-            connectMode ? "bg-primary text-primary-foreground" : "hover:bg-muted"
-          }`}
-          title="Modo conexão (Esc para sair)"
-        >
-          <Link2 size={14} /> <span className="hidden xl:inline">Conectar</span>
-        </button>
-
-        <button
-          onClick={() => setOrganizeSignal((signal) => signal + 1)}
-          className="hidden lg:flex px-3 py-1.5 rounded-lg hover:bg-muted text-sm flex items-center justify-center gap-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11"
-          title="Organizar automaticamente"
-        >
-          <Wand2 size={14} /> <span className="hidden xl:inline">Organizar</span>
-        </button>
-
-        <div className="ml-auto lg:ml-0 hidden lg:flex items-center gap-1">
-          <ExportMenu />
+        <div className="ml-auto flex shrink-0 items-center gap-1">
           <button
             onClick={() => navigate({ to: "/review/$id", params: { id: map.id } })}
-            className="px-3 py-1.5 rounded-lg hover:bg-muted text-sm flex items-center justify-center gap-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11"
-            title="Revisar este mapa com cartões"
+            className="h-9 px-3 rounded-lg bg-primary/10 text-primary hover:bg-primary/15 text-sm font-medium flex items-center justify-center gap-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11"
+            title="Estudar este mapa com cartões de revisão"
           >
-            <GraduationCap size={14} /> <span className="hidden xl:inline">Revisar</span>
+            <GraduationCap size={16} /> <span className="hidden sm:inline">Revisar</span>
           </button>
-          <PanelsMenu />
-          <button
-            onClick={() => window.dispatchEvent(new Event("mm-center"))}
-            className="px-3 py-1.5 rounded-lg hover:bg-muted text-sm flex items-center justify-center gap-1.5 pointer-coarse:min-h-11 pointer-coarse:min-w-11"
-            title="Centralizar mapa"
-            aria-label="Centralizar mapa"
-          >
-            <Crosshair size={14} />
-          </button>
-        </div>
-
-        {/* Phones and portrait tablets: the rest lives in one touch-friendly menu. */}
-        <div className="ml-auto lg:hidden">
-          <EditorMoreMenu
-            view={view}
-            onViewChange={setView}
-            connectMode={connectMode}
-            onToggleConnect={() => setConnectMode(!connectMode)}
-            onOrganize={() => setOrganizeSignal((signal) => signal + 1)}
-            onReview={() => navigate({ to: "/review/$id", params: { id: map.id } })}
-          />
+          <EditorMoreMenu />
         </div>
       </Header>
       <div className="flex-1 relative">
-        {/* Quick actions float just under the top bar, so the bar itself stays uncluttered. */}
+        {/* The editing tools, in one bar floating just under the header on every screen size. */}
         <div
           role="toolbar"
-          aria-label="Ações rápidas"
-          className="absolute left-1/2 top-2 z-30 flex -translate-x-1/2 items-center gap-0.5 rounded-full border border-border bg-card/95 p-1 text-card-foreground shadow-[var(--shadow-soft)] backdrop-blur"
+          aria-label="Ferramentas do mapa"
+          className="absolute left-1/2 top-2 z-30 flex max-w-[calc(100%-16px)] -translate-x-1/2 items-center gap-0.5 overflow-x-auto rounded-full border border-border bg-card/95 p-1 text-card-foreground shadow-[var(--shadow-soft)] backdrop-blur"
         >
           <button
             onClick={() => setUndoSignal((signal) => signal + 1)}
             disabled={!history.canUndo}
-            className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted pointer-coarse:h-11 pointer-coarse:w-11 disabled:opacity-40 disabled:pointer-events-none"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full hover:bg-muted pointer-coarse:h-11 pointer-coarse:w-11 disabled:opacity-40 disabled:pointer-events-none"
             title="Desfazer (Ctrl+Z)"
             aria-label="Desfazer"
           >
@@ -291,13 +297,64 @@ function EditorPage() {
           <button
             onClick={() => setRedoSignal((signal) => signal + 1)}
             disabled={!history.canRedo}
-            className="grid h-8 w-8 place-items-center rounded-full hover:bg-muted pointer-coarse:h-11 pointer-coarse:w-11 disabled:opacity-40 disabled:pointer-events-none"
-            title="Refazer (Ctrl+Y)"
+            className="grid h-8 w-8 shrink-0 place-items-center rounded-full hover:bg-muted pointer-coarse:h-11 pointer-coarse:w-11 disabled:opacity-40 disabled:pointer-events-none"
+            title="Refazer (Ctrl+Shift+Z)"
             aria-label="Refazer"
           >
             <Redo2 size={16} />
           </button>
-          <span className="mx-1 h-5 w-px bg-border" aria-hidden />
+          <span className="mx-1 h-5 w-px shrink-0 bg-border" aria-hidden />
+          <div
+            className="flex shrink-0 items-center rounded-full bg-muted p-0.5"
+            role="group"
+            aria-label="Visão"
+          >
+            {(
+              [
+                [
+                  "tree",
+                  "Árvore",
+                  "Visão em árvore: organizada automaticamente",
+                  <GitBranch key="t" size={14} />,
+                ],
+                [
+                  "graph",
+                  "Grafo",
+                  "Visão em grafo: posições livres",
+                  <Network key="g" size={14} />,
+                ],
+              ] as const
+            ).map(([value, label, hint, icon]) => (
+              <button
+                key={value}
+                onClick={() => setView(value)}
+                aria-pressed={view === value}
+                className={`h-7 px-2.5 rounded-full text-sm flex items-center justify-center gap-1.5 transition pointer-coarse:min-h-10 pointer-coarse:min-w-10 ${view === value ? "bg-card shadow-sm" : "text-muted-foreground"}`}
+                title={hint}
+                aria-label={label}
+              >
+                {icon} <span className="hidden md:inline">{label}</span>
+              </button>
+            ))}
+          </div>
+          <span className="mx-1 h-5 w-px shrink-0 bg-border" aria-hidden />
+          <button
+            onClick={() => setConnectMode(!connectMode)}
+            aria-pressed={connectMode}
+            className={toolButton(connectMode)}
+            title="Ligar duas ideias com uma linha (Esc para sair)"
+            aria-label="Conectar"
+          >
+            <Link2 size={14} /> <span className="hidden lg:inline">Conectar</span>
+          </button>
+          <button
+            onClick={() => setOrganizeSignal((signal) => signal + 1)}
+            className={toolButton()}
+            title="Organizar automaticamente"
+            aria-label="Organizar"
+          >
+            <Wand2 size={14} /> <span className="hidden lg:inline">Organizar</span>
+          </button>
           <AppearanceButton />
         </div>
         <MindMapEditor
@@ -310,6 +367,7 @@ function EditorPage() {
           undoSignal={undoSignal}
           redoSignal={redoSignal}
           onHistoryChange={setHistory}
+          onSaveStatusChange={setSaveStatus}
           userId={user.id}
           onShowTour={handleShowTour}
         />

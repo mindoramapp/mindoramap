@@ -19,7 +19,8 @@ export function defaultPanelLayout(): PanelLayout {
   const height = typeof window === "undefined" ? 800 : window.innerHeight - HEADER_HEIGHT;
   return {
     inspector: { show: true, minimized: false, position: { x: Math.max(12, width - 352), y: 12 } },
-    help: { show: true, minimized: true, position: { x: 12, y: 12 } },
+    // Help starts closed: it opens from the "⋯" menu ("Atalhos e ajuda").
+    help: { show: false, minimized: false, position: { x: 12, y: 12 } },
     minimap: {
       show: true,
       minimized: true,

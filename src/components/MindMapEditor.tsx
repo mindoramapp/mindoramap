@@ -103,6 +103,9 @@ const setShowInspector = (value: Visibility) => useEditorPanels.getState().set("
 const setShowHelp = (value: Visibility) => useEditorPanels.getState().set("help", value);
 const setShowMiniMap = (value: Visibility) => useEditorPanels.getState().set("minimap", value);
 
+/** "local": the server save failed, the change is kept on this device until the next try. */
+export type SaveStatus = "saving" | "saved" | "local";
+
 interface Props {
   map: MindMap;
   mode: "tree" | "graph";
@@ -113,6 +116,7 @@ interface Props {
   undoSignal: number;
   redoSignal: number;
   onHistoryChange?: (state: { canUndo: boolean; canRedo: boolean }) => void;
+  onSaveStatusChange?: (status: SaveStatus) => void;
   userId?: string;
   onShowTour?: () => void;
 }
@@ -254,6 +258,7 @@ function EditorInner({
   undoSignal,
   redoSignal,
   onHistoryChange,
+  onSaveStatusChange,
   userId,
   onShowTour,
 }: Props) {
@@ -346,8 +351,7 @@ function EditorInner({
     if (isMobile) {
       setShowMiniMap(true);
       setMiniMapMinimized(true);
-      setShowHelp(true);
-      setHelpMinimized(true);
+      setShowHelp(false);
       setInspectorMinimized(true);
       setShowInspector(true);
       return;
@@ -396,6 +400,8 @@ function EditorInner({
   // the last change. Leaving the editor, closing the tab or hiding it flushes the pending save,
   // so a quick edit right before navigating away isn't lost.
   const pendingSave = useRef<MindMap | null>(null);
+  const saveStatusRef = useRef(onSaveStatusChange);
+  saveStatusRef.current = onSaveStatusChange;
 
   const flushSave = useCallback(() => {
     const snapshot = pendingSave.current;
@@ -405,8 +411,11 @@ function EditorInner({
       .then(() => {
         saveFailureNotified.current = false;
         clearDraft(snapshot.ownerId, snapshot.id, snapshot.updatedAt);
+        // A newer change may already be waiting for its own save.
+        if (!pendingSave.current) saveStatusRef.current?.("saved");
       })
       .catch((error) => {
+        saveStatusRef.current?.("local");
         if (saveFailureNotified.current) return;
         saveFailureNotified.current = true;
         reportActionError(
@@ -420,6 +429,7 @@ function EditorInner({
     const snapshot = { ...map, nodes, edges, viewport, updatedAt: Date.now() };
     pendingSave.current = snapshot;
     writeDraft(snapshot);
+    saveStatusRef.current?.("saving");
     const timer = window.setTimeout(flushSave, AUTOSAVE_DELAY);
     return () => window.clearTimeout(timer);
   }, [nodes, edges, viewport, map, flushSave]);
@@ -497,6 +507,21 @@ function EditorInner({
     window.addEventListener("mm-center", centerHandler);
     return () => window.removeEventListener("mm-center", centerHandler);
   }, [fitView]);
+
+  // "Atalhos e ajuda" in the toolbar menu opens the help panel expanded.
+  useEffect(() => {
+    const helpHandler = () => {
+      setShowHelp(true);
+      setHelpMinimized(false);
+      if (isMobile) {
+        // Phones show one drawer at a time.
+        setInspectorMinimized(true);
+        setMiniMapMinimized(true);
+      }
+    };
+    window.addEventListener("mm-help", helpHandler);
+    return () => window.removeEventListener("mm-help", helpHandler);
+  }, [isMobile]);
 
   useEffect(() => {
     const exportHandler = (event: Event) => {
@@ -1230,7 +1255,8 @@ function EditorInner({
   const selectedNode = selectedId ? nodes.find((node) => node.id === selectedId) : null;
 
   const proximityHintEdge = useMemo(() => {
-    if (!hoverId || !selectedId || hoverId === selectedId) return null;
+    // Only a hint while connecting; outside that mode it was noise on every hover.
+    if (!connectMode || !hoverId || !selectedId || hoverId === selectedId) return null;
     const source = nodes.find((node) => node.id === selectedId);
     const target = nodes.find((node) => node.id === hoverId);
     if (!source || !target) return null;
@@ -1246,7 +1272,7 @@ function EditorInner({
         (edge.source === hoverId && edge.target === selectedId),
     );
     return exists ? null : { source: selectedId, target: hoverId };
-  }, [hoverId, selectedId, nodes, edges]);
+  }, [connectMode, hoverId, selectedId, nodes, edges]);
 
   const toggleInspector = useCallback(() => {
     if (!selectedNode) return;
@@ -1584,13 +1610,6 @@ function EditorInner({
             active={!miniMapMinimized}
             minimized={miniMapMinimized}
             onClick={toggleMiniMap}
-          />
-          <PanelDockItem
-            label="Ajuda"
-            icon={<CircleHelp size={14} />}
-            active={!helpMinimized}
-            minimized={helpMinimized}
-            onClick={toggleHelp}
           />
         </div>
       )}

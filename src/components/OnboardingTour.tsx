@@ -1,15 +1,6 @@
 // First-time interactive onboarding tour for the mind map editor
 import { useEffect, useRef, useState } from "react";
-import {
-  ArrowRight,
-  GitBranch,
-  Keyboard,
-  Layers,
-  MousePointer2,
-  Sparkles,
-  X,
-  Zap,
-} from "lucide-react";
+import { ArrowRight, Check, GitBranch, Layers, MousePointer2, Sparkles, X } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { markOnboardingDone } from "@/lib/onboarding";
 
@@ -22,23 +13,12 @@ interface TourStep {
   extra?: React.ReactNode;
 }
 
+// Three short steps: write, grow, find the tools. Everything else is discovered in place.
 const STEPS: TourStep[] = [
   {
     icon: <Sparkles size={20} />,
     title: "Bem-vindo ao Mindora!",
-    body: "Você está no editor de mapas mentais. Em menos de 1 minuto, vamos te mostrar como criar mapas poderosos.",
-    placement: "center",
-    extra: (
-      <div className="mt-4 flex items-center gap-2 rounded-2xl bg-primary/10 px-4 py-2.5 text-xs text-primary">
-        <Sparkles size={14} className="shrink-0" />
-        <span>Dica: você pode pular este tour a qualquer momento</span>
-      </div>
-    ),
-  },
-  {
-    icon: <MousePointer2 size={20} />,
-    title: "Nó central",
-    body: "O nó no centro é a raiz do seu mapa. Dê um duplo clique nele para editar o texto e personalizar o conteúdo.",
+    body: "O balão do centro é a ideia principal do mapa. Dê um duplo clique nele para escrever.",
     placement: "center",
     extra: (
       <div className="mt-4 inline-flex items-center gap-2 rounded-2xl border border-border bg-muted px-3 py-2 text-xs font-medium text-foreground">
@@ -49,17 +29,16 @@ const STEPS: TourStep[] = [
   },
   {
     icon: <GitBranch size={20} />,
-    title: "Adicionar ideias",
-    body: "Selecione um nó e use os atalhos abaixo para expandir seu mapa sem precisar do mouse.",
+    title: "Adicione ideias",
+    body: "Selecione um balão e crie ideias ligadas a ele. No celular, use os botões “+ Filho” e “+ Irmão” na parte de baixo.",
     placement: "center",
     extra: (
       <div className="mt-4 space-y-2">
         {[
-          { key: "Tab", desc: "cria um nó filho" },
-          { key: "Enter", desc: "cria um nó irmão" },
-          { key: "Del", desc: "remove o nó selecionado" },
+          { key: "Tab", desc: "cria um balão filho" },
+          { key: "Enter", desc: "cria um balão irmão" },
+          { key: "Del", desc: "remove o balão selecionado" },
           { key: "Ctrl+Z", desc: "desfaz a última ação" },
-          { key: "Ctrl+Shift+Z", desc: "refaz o que foi desfeito" },
         ].map(({ key, desc }) => (
           <div key={key} className="flex items-center gap-2.5 text-xs">
             <kbd className="min-w-[52px] rounded-lg border border-border bg-muted px-2 py-1 text-center font-semibold text-foreground shadow-sm">
@@ -73,22 +52,14 @@ const STEPS: TourStep[] = [
   },
   {
     icon: <Layers size={20} />,
-    title: "Barra de ferramentas",
-    body: "Na barra superior você pode alternar entre modo Árvore e Grafo, conectar nós e organizar o mapa automaticamente.",
-    highlight: "header",
+    title: "Suas ferramentas",
+    body: "Nesta barra você desfaz, alterna entre Árvore e Grafo, conecta ideias, organiza e muda as cores. Exportar, painéis e atalhos ficam no menu ⋯ do topo.",
+    highlight: '[aria-label="Ferramentas do mapa"]',
     placement: "below-header",
-  },
-  {
-    icon: <Zap size={20} />,
-    title: "Tudo pronto! 🎉",
-    body: "Explore os painéis flutuantes, experimente criar conexões entre nós e use o Minimapa para navegar.",
-    placement: "center",
     extra: (
-      <div className="mt-4 space-y-2">
-        <div className="flex items-center gap-2 rounded-2xl bg-primary/10 px-4 py-2.5 text-xs text-primary">
-          <Keyboard size={14} className="shrink-0" />
-          <span>Clique com botão direito em qualquer nó para ver mais opções</span>
-        </div>
+      <div className="mt-4 flex items-center gap-2 rounded-2xl bg-primary/10 px-4 py-2.5 text-xs text-primary">
+        <Check size={14} className="shrink-0" />
+        <span>Tudo é salvo sozinho. O estado aparece ao lado do nome do mapa.</span>
       </div>
     ),
   },
@@ -139,7 +110,7 @@ export function OnboardingTour({ userId, onDone }: Props) {
     "absolute z-[51] w-[380px] max-w-[calc(100vw-32px)] rounded-3xl border border-border/60 bg-card p-6 shadow-2xl",
     "transition duration-300",
     current.placement === "below-header"
-      ? "left-1/2 -translate-x-1/2 top-20"
+      ? "left-1/2 -translate-x-1/2 top-36"
       : "left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2",
   );
 

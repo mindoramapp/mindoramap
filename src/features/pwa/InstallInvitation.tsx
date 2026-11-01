@@ -12,7 +12,8 @@ import {
 } from "./installPrompt";
 
 const SHOW_AFTER_MS = 3000;
-const ENTRY_SCREENS = ["/", "/login", "/register", "/dashboard"];
+// Not on login/register: those screens have one job, and a popup there gets in the way.
+const ENTRY_SCREENS = ["/", "/dashboard"];
 
 const BENEFITS = [
   { icon: <Zap size={15} />, text: "Abre direto da tela inicial, em um toque" },

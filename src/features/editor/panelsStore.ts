@@ -15,7 +15,7 @@ interface PanelsState {
 }
 
 export const useEditorPanels = create<PanelsState>((set) => ({
-  visible: { inspector: true, help: true, minimap: true },
+  visible: { inspector: true, help: false, minimap: true },
   resetSignal: 0,
   set: (panel, value) =>
     set((state) => ({
@@ -27,7 +27,7 @@ export const useEditorPanels = create<PanelsState>((set) => ({
   hydrate: (visible) => set({ visible }),
   reset: () =>
     set((state) => ({
-      visible: { inspector: true, help: true, minimap: true },
+      visible: { inspector: true, help: false, minimap: true },
       resetSignal: state.resetSignal + 1,
     })),
 }));

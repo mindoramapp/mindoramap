@@ -4,6 +4,7 @@ import { Lightbulb, X } from "lucide-react";
 // window.setTimeout returns number in browsers, not NodeJS Timeout
 type TimerId = ReturnType<typeof window.setTimeout>;
 import { cn } from "@/lib/utils";
+import { isOnboardingDone } from "@/lib/onboarding";
 
 const TIPS_KEY = "mm_tips_v2_";
 
@@ -31,13 +32,14 @@ interface TipDef {
 const TIP_DEFS: TipDef[] = [
   {
     id: "first-child",
-    message: "Pressione Tab para criar seu primeiro nó filho — sem precisar do mouse!",
+    message:
+      "Selecione o balão e pressione Tab (ou toque em “+ Filho”) para criar a primeira ideia.",
     condition: ({ nodeCount }) => nodeCount <= 1,
     delayMs: 4000,
   },
   {
     id: "connect-ideas",
-    message: "Experimente conectar ideias relacionadas usando o botão Conectar na barra.",
+    message: "Ideias relacionadas em ramos diferentes? Ligue-as com o botão Conectar da barra.",
     condition: ({ nodeCount, graphEdgeCount }) => nodeCount >= 4 && graphEdgeCount === 0,
     delayMs: 3000,
   },
@@ -65,6 +67,8 @@ export function ContextualTip({ userId, nodeCount, graphEdgeCount }: Props) {
   const [activeTip, setActiveTip] = useState<TipDef | null>(null);
   const [visible, setVisible] = useState(false);
   const dismissTimerRef = useRef<number | null>(null);
+  // One tip per visit to the editor is enough; the rest wait for the next visit.
+  const shownThisVisit = useRef(false);
 
   const dismiss = useCallback(
     (tipId: string) => {
@@ -78,6 +82,8 @@ export function ContextualTip({ userId, nodeCount, graphEdgeCount }: Props) {
   // Find the next applicable tip whenever state changes
   useEffect(() => {
     if (activeTip) return; // Don't change tip while one is showing
+    // The welcome tour already covers the basics; tips only start after it.
+    if (shownThisVisit.current || !isOnboardingDone(userId)) return;
 
     const shown = getShownTips(userId);
     const tip = TIP_DEFS.find(
@@ -87,6 +93,7 @@ export function ContextualTip({ userId, nodeCount, graphEdgeCount }: Props) {
 
     const delay = tip.delayMs ?? 3000;
     const appearTimer = window.setTimeout(() => {
+      shownThisVisit.current = true;
       setActiveTip(tip);
       setVisible(true);
     }, delay);
