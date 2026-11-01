@@ -20,6 +20,9 @@ Zustand · Tailwind CSS 4 · Supabase (auth + banco).
   (Renomear, Mover para pasta, Excluir).
 - **Primeira visita:** tour de 3 passos; as dicas contextuais só começam depois dele, uma por
   visita ao editor.
+- **Cadastro:** depois de criar a conta, a tela "Confira seu e-mail" mostra o endereço usado
+  e reenvia a confirmação (60 s entre tentativas); o login oferece o mesmo reenvio quando o
+  e-mail ainda não foi confirmado.
 - **Acesso:** "Esqueci minha senha" no login envia o e-mail de recuperação; o link abre
   `#/reset-password`. A URL do site precisa estar em *Authentication → URL Configuration →
   Redirect URLs* no Supabase.
@@ -108,8 +111,11 @@ Pago, Asaas…) pode automatizar esse passo no futuro sem mudar o resto.
 
 ## Acesso, planos e permissões
 
-- **Convite:** a conta só usa o produto depois de ativada com um código gerado no painel
-  admin. A regra fica em `has_app_access()` e é exigida por todas as políticas RLS de conteúdo.
+- **Cadastro aberto (desde 01/11/2026):** toda conta nova já nasce liberada
+  (`access_granted_at` preenchido pelo gatilho do cadastro, migração
+  `20261101010000_open_signup.sql`); basta confirmar o e-mail. Os códigos de acesso do painel
+  admin continuam funcionando, e `has_app_access()` (exigida por todas as políticas RLS de
+  conteúdo) ainda barra contas bloqueadas.
 - **Planos:** a tabela `plans` é a fonte única de preços e limites (Free, Plus e Pro). Mudar um limite ou preço é um `UPDATE` nessa tabela, sem deploy.
 - **Aplicação no banco:** triggers recusam criar mapas, pastas ou nós acima do limite do
   plano efetivo, com o erro `PLAN_LIMIT:<limite>`. Um downgrade nunca apaga dados: o que já

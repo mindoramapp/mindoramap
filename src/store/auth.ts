@@ -96,6 +96,10 @@ const mapUser = (session: Session | null, profile: UserProfile | null): User | n
 
 const getConfigError = () => "Autenticação ainda não configurada para este ambiente.";
 
+/** Login error for accounts that haven't opened the confirmation link yet (login offers a resend). */
+export const EMAIL_NOT_CONFIRMED_ERROR =
+  "Seu e-mail ainda não foi confirmado. Abra o link que enviamos no cadastro.";
+
 export const normalizeAuthError = (message?: string) => {
   const normalizedMessage = message?.trim().toLowerCase() || "";
 
@@ -128,7 +132,7 @@ export const normalizeAuthError = (message?: string) => {
   }
 
   if (normalizedMessage.includes("email not confirmed")) {
-    return "Confirme seu email antes de entrar.";
+    return EMAIL_NOT_CONFIRMED_ERROR;
   }
 
   if (normalizedMessage.includes("network") || normalizedMessage.includes("fetch")) {

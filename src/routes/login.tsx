@@ -2,7 +2,8 @@ import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ThemeToggle } from "@/components/ThemeToggle";
 import { useTheme } from "@/hooks/useTheme";
-import { useAuth } from "@/store/auth";
+import { EMAIL_NOT_CONFIRMED_ERROR, useAuth } from "@/store/auth";
+import { ResendConfirmation } from "@/components/ResendConfirmation";
 import { ArrowLeft, Brain, LockKeyhole, Mail } from "lucide-react";
 
 const AUTH_FEEDBACK_KEY = "mindora-auth-feedback";
@@ -195,6 +196,7 @@ function LoginPage() {
           )}
           {success && <p className="text-sm text-emerald-600">{success}</p>}
           {error && <p className="text-sm text-destructive">{error}</p>}
+          {error === EMAIL_NOT_CONFIRMED_ERROR && <ResendConfirmation email={email} />}
           {import.meta.env.DEV && debug && (
             <p className="text-xs text-amber-600 break-words rounded-md bg-amber-500/10 px-2 py-1">
               Debug: {debug}

@@ -500,8 +500,8 @@ export function LandingPage() {
                       Crie sua conta e monte o primeiro mapa hoje.
                     </h2>
                     <p className="mt-4 max-w-2xl text-base leading-7 text-muted-foreground">
-                      O plano Free inclui 3 mapas. O acesso é liberado por convite: depois de criar
-                      a conta, informe o código que você recebeu.
+                      É grátis para começar, no plano Free. Crie a conta, confirme o e-mail e
+                      pronto: você já monta o primeiro mapa.
                     </p>
                   </div>
 

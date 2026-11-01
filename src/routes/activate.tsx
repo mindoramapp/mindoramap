@@ -5,12 +5,12 @@ import { Header } from "@/components/Header";
 import { useAuth } from "@/store/auth";
 
 export const Route = createFileRoute("/activate")({
-  head: () => ({ meta: [{ title: "Liberar Acesso - Mindora" }] }),
+  head: () => ({ meta: [{ title: "Liberar acesso - Mindora" }] }),
   component: ActivatePage,
 });
 
 function ActivatePage() {
-  const { user, initialized, init, activateWithCode } = useAuth();
+  const { user, initialized, init, activateWithCode, refreshProfile } = useAuth();
   const navigate = useNavigate();
   const [code, setCode] = useState("");
   const [error, setError] = useState("");
@@ -21,6 +21,12 @@ function ActivatePage() {
   useEffect(() => {
     void init();
   }, [init]);
+
+  // Signup is open now, so landing here usually means the profile was read before the server
+  // released it: one fresh read sends the person on to their maps.
+  useEffect(() => {
+    if (initialized) void refreshProfile();
+  }, [initialized, refreshProfile]);
 
   useEffect(() => {
     if (!initialized) return;
@@ -68,13 +74,14 @@ function ActivatePage() {
             <span className="w-14 h-14 rounded-2xl bg-primary/10 text-primary grid place-items-center">
               <ShieldCheck size={24} />
             </span>
-            <h1 className="text-2xl font-bold">Liberar acesso</h1>
+            <h1 className="text-2xl font-bold">Quase lá</h1>
             <p className="text-sm text-muted-foreground">
-              O email <strong>{user.email}</strong> precisa de um código de acesso no primeiro uso.
+              A conta <strong>{user.email}</strong> ainda está sendo liberada. Recarregue a página
+              em alguns segundos. Se você recebeu um código de acesso, também pode digitá-lo aqui.
             </p>
           </div>
 
-          <label className="text-xs text-muted-foreground">Código de acesso</label>
+          <label className="text-xs text-muted-foreground">Código de acesso (opcional)</label>
           <input
             autoFocus
             required
