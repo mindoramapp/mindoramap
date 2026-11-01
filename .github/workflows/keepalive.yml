@@ -1,12 +1,14 @@
 # Free Supabase projects are paused after about a week without activity, which takes login and
-# every map offline. This workflow runs a small database query every 3 days so the project
-# keeps counting as active. If the project is paused anyway, the run fails and GitHub e-mails
-# the repository owner: restore it at supabase.com/dashboard.
+# every map offline. A read-only query every 3 days did not prevent a pause in October 2026, so
+# this now runs daily and calls keepalive(), which writes to the database (migration
+# 20261101000000_keepalive.sql). The owner's notebook runs the same ping as a second source,
+# since GitHub disables scheduled workflows after 60 days without commits. If the project is
+# paused anyway, the run fails and GitHub e-mails the owner: resume it at supabase.com/dashboard.
 name: Manter Supabase ativo
 
 on:
   schedule:
-    - cron: "17 9 */3 * *"
+    - cron: "17 9 * * *"
   workflow_dispatch:
 
 permissions:
@@ -26,10 +28,17 @@ jobs:
             echo "::error::Secrets do Supabase não configurados."
             exit 1
           fi
-          # Public, read-only query (the plan list); it reaches Postgres, which is what counts.
+          # keepalive() updates one fixed row: a real write, with no input from the caller.
           status=$(curl -sS -o /dev/null -w "%{http_code}" --retry 3 --retry-delay 20 -m 30 \
-            "$VITE_SUPABASE_URL/rest/v1/plans?select=id&limit=1" \
-            -H "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY") || status="sem resposta"
+            -X POST "$VITE_SUPABASE_URL/rest/v1/rpc/keepalive" \
+            -H "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY" \
+            -H "Content-Type: application/json" -d '{}') || status="sem resposta"
+          if [ "$status" = "404" ]; then
+            echo "::warning::keepalive() não existe: aplique a migração 20261101000000_keepalive.sql. Usando a consulta de leitura."
+            status=$(curl -sS -o /dev/null -w "%{http_code}" --retry 3 --retry-delay 20 -m 30 \
+              "$VITE_SUPABASE_URL/rest/v1/plans?select=id&limit=1" \
+              -H "apikey: $VITE_SUPABASE_PUBLISHABLE_KEY") || status="sem resposta"
+          fi
           echo "Resposta do Supabase: $status"
           if [ "$status" != "200" ]; then
             echo "::error title=Supabase fora do ar::O projeto não respondeu ($status). Se estiver pausado, restaure em https://supabase.com/dashboard."
