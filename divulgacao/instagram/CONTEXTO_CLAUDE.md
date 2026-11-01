@@ -31,6 +31,10 @@ algo.
 
 | O quê | Onde |
 |---|---|
+| Estratégia (pilares, fases, técnicas, limites éticos, preços do dia) | `instagram/ESTRATEGIA.md` |
+| Calendário de 8 semanas (24 posts) | `instagram/CALENDARIO.md` |
+| Um post por pasta: `BRIEFING.md`, `legenda.txt`, `midia/` | `instagram/posts/SNN_PNN_slug/` |
+| Gerador das pastas e do calendário | `ferramentas/gerar_posts_instagram.py` (não sobrescreve briefings; o calendário lê o "Status:") |
 | Passo a passo do perfil | `instagram/PASSO_A_PASSO.md` |
 | Bio, nomes, destaques | `instagram/BIO.md` |
 | Foto de perfil (1080×1080, gradiente até a borda) | `instagram/foto_perfil.png` (fonte: `ferramentas/cenas/foto_perfil.svg`) |
@@ -43,6 +47,11 @@ algo.
 (Caminhos relativos a `/mnt/dados/projetos/mindoramap/divulgacao/`. Imagens e vídeos ficam fora
 do Git; os textos estão versionados.)
 
+**Google Drive:** a pasta é espelhada, legível, em `Meu Drive/Mindora/divulgacao` por
+`ferramentas/subir-drive.sh` (sentido único HD → Drive; `brutos/` fica de fora; o que muda vai
+para `Mindora/_versoes/<data>`). Rodar o script depois de cada mudança. Não editar arquivos pelo
+Drive: a próxima sincronização os substitui.
+
 ## Como produzir conteúdo novo
 
 - **Carrossel de matéria** ("X em 1 mapa"): montar o mapa na conta demo, exportar PNG pelo menu
@@ -53,10 +62,19 @@ do Git; os textos estão versionados.)
   e fecha a janela antes de gravar.
 - Ganchos já pensados: "Leu e esqueceu?", "Seu resumo tem 10 páginas?", "Estude menos, lembre mais."
 
+## Rotina semanal (sexta)
+
+1. Atualizar "Status" e métricas nos briefings da semana.
+2. `python3 divulgacao/ferramentas/gerar_posts_instagram.py` (refaz o calendário).
+3. `divulgacao/ferramentas/subir-drive.sh` (atualiza o Drive).
+4. Semanas 4 e 8: repetir o formato dos 2 posts com mais salvamentos; depois da semana 8,
+   planejar as semanas 9–16 acrescentando posts ao gerador.
+
 ## Estado
 
 - [x] Kit de lançamento pronto (vídeos, capas, post, legendas, foto, bio, passo a passo).
-- [ ] Usuário criar o perfil e escolher o nome de usuário.
+- [x] Estratégia, calendário (09/11/2026 a 15/01/2027, pausa de festas) e 24 briefings prontos.
+- [ ] Usuário criar o perfil e escolher o nome de usuário (`@mindora.app` ocupado; sugerido `@mindoramapp`).
 - [ ] Publicar os 6 a 9 primeiros posts antes de divulgar (tabela no passo a passo).
 - [ ] Criar capas dos destaques no Canva.
 - [ ] Reservar o mesmo nome no TikTok.
@@ -64,4 +82,5 @@ do Git; os textos estão versionados.)
 ## Registro
 
 - 01/11/2026: pasta criada com foto de perfil, post de apresentação, passo a passo, bio e este
-  contexto.
+  contexto. `@mindora.app` estava ocupado; sugerido `@mindoramapp`. Nome do perfil tem limite
+  de 30 caracteres. Espelho no Google Drive criado e conferido (27 arquivos).
