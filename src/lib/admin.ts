@@ -145,7 +145,7 @@ export const createAccessCode = async (targetUserId: string, expiresInHours: num
 
   const row = Array.isArray(data) ? data[0] : data;
   if (!row?.access_code) {
-    throw new Error(`Resposta inesperada ao gerar codigo: ${JSON.stringify(data)}`);
+    throw new Error(`Resposta inesperada ao gerar código: ${JSON.stringify(data)}`);
   }
 
   return {
@@ -160,15 +160,15 @@ export const buildAccessCodeEmail = (
   accessCode: string,
   expiresAt: string,
 ) => {
-  const subject = "Seu codigo de acesso ao Mindora";
+  const subject = "Seu código de acesso ao Mindora";
   const body = [
     "Ola,",
     "",
     "Seu cadastro no Mindora foi aprovado.",
-    `Codigo de acesso: ${accessCode}`,
+    `Código de acesso: ${accessCode}`,
     `Validade: ${new Date(expiresAt).toLocaleString()}`,
     "",
-    "Entre na plataforma com seu email e senha e use esse codigo na tela de liberacao.",
+    "Entre na plataforma com seu email e senha e use esse código na tela de liberação.",
   ].join("\n");
 
   const params = new URLSearchParams({

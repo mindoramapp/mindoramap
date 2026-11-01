@@ -8,7 +8,7 @@ export const validatePasswordPolicy = (password: string): string | null => {
   }
 
   if (!/[a-z]/.test(password) || !/[A-Z]/.test(password) || !/\d/.test(password)) {
-    return "Use pelo menos 1 letra maiuscula, 1 minuscula e 1 numero";
+    return "Use pelo menos 1 letra maiúscula, 1 minúscula e 1 número";
   }
 
   return null;

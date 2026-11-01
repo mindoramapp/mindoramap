@@ -44,7 +44,7 @@ function ActivatePage() {
     setSubmitting(false);
 
     if (!result.ok) {
-      setError(result.error || "Codigo invalido.");
+      setError(result.error || "Código inválido.");
       setDebug(result.debug || "");
       return;
     }
@@ -70,11 +70,11 @@ function ActivatePage() {
             </span>
             <h1 className="text-2xl font-bold">Liberar acesso</h1>
             <p className="text-sm text-muted-foreground">
-              O email <strong>{user.email}</strong> precisa de um codigo de acesso no primeiro uso.
+              O email <strong>{user.email}</strong> precisa de um código de acesso no primeiro uso.
             </p>
           </div>
 
-          <label className="text-xs text-muted-foreground">Codigo hexadecimal</label>
+          <label className="text-xs text-muted-foreground">Código de acesso</label>
           <input
             autoFocus
             required

@@ -17,16 +17,16 @@ function NotFoundComponent() {
     <div className="flex min-h-dvh items-center justify-center bg-background px-4">
       <div className="max-w-md text-center">
         <h1 className="text-7xl font-bold text-foreground">404</h1>
-        <h2 className="mt-4 text-xl font-semibold text-foreground">Pagina nao encontrada</h2>
+        <h2 className="mt-4 text-xl font-semibold text-foreground">Página não encontrada</h2>
         <p className="mt-2 text-sm text-muted-foreground">
-          A pagina que voce tentou abrir nao existe ou foi movida.
+          A página que você tentou abrir não existe ou foi movida.
         </p>
         <div className="mt-6">
           <Link
             to="/"
             className="inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
           >
-            Voltar ao inicio
+            Voltar ao início
           </Link>
         </div>
       </div>
@@ -72,8 +72,8 @@ function RootComponent() {
         const message = decodedError
           ? decodedError
           : (errorCode || hashErrorCode) === "otp_expired"
-            ? "Seu link de confirmacao expirou. Solicite um novo email para continuar."
-            : "Nao foi possivel confirmar seu email. Tente novamente.";
+            ? "Seu link de confirmação expirou. Solicite um novo email para continuar."
+            : "Não foi possível confirmar seu email. Tente novamente.";
 
         setAuthFeedback(message);
         setAuthMessage(message);
@@ -95,8 +95,8 @@ function RootComponent() {
 
         if (result.error) {
           const message = result.error.message.toLowerCase().includes("expired")
-            ? "Seu link de confirmacao expirou. Solicite um novo email para continuar."
-            : "Nao foi possivel confirmar seu email. Solicite um novo link e tente novamente.";
+            ? "Seu link de confirmação expirou. Solicite um novo email para continuar."
+            : "Não foi possível confirmar seu email. Solicite um novo link e tente novamente.";
           setAuthFeedback(message);
           setAuthMessage(message);
           window.history.replaceState({}, document.title, loginHref);
@@ -106,7 +106,7 @@ function RootComponent() {
 
         const message =
           callbackType === "signup"
-            ? "Email confirmado com sucesso. Agora voce pode entrar."
+            ? "Email confirmado com sucesso. Agora você pode entrar."
             : "Acesso validado com sucesso.";
         setAuthFeedback(message);
         setAuthMessage(message);
@@ -127,8 +127,8 @@ function RootComponent() {
 
       if (result.error) {
         const message = result.error.message.toLowerCase().includes("expired")
-          ? "Seu link de confirmacao expirou. Solicite um novo email para continuar."
-          : "Nao foi possivel confirmar seu email. Solicite um novo link e tente novamente.";
+          ? "Seu link de confirmação expirou. Solicite um novo email para continuar."
+          : "Não foi possível confirmar seu email. Solicite um novo link e tente novamente.";
         setAuthFeedback(message);
         setAuthMessage(message);
         window.history.replaceState({}, document.title, loginHref);
@@ -136,8 +136,8 @@ function RootComponent() {
         return;
       }
 
-      setAuthFeedback("Email confirmado com sucesso. Agora voce pode entrar.");
-      setAuthMessage("Conta criada com sucesso. Agora voce pode fazer login.");
+      setAuthFeedback("Email confirmado com sucesso. Agora você pode entrar.");
+      setAuthMessage("Conta criada com sucesso. Agora você pode fazer login.");
       window.history.replaceState({}, document.title, loginHref);
       setProcessingAuth(false);
     };

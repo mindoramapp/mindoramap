@@ -92,13 +92,13 @@ const mapUser = (session: Session | null, profile: UserProfile | null): User | n
   };
 };
 
-const getConfigError = () => "Autenticacao ainda nao configurada para este ambiente.";
+const getConfigError = () => "Autenticação ainda não configurada para este ambiente.";
 
 export const normalizeAuthError = (message?: string) => {
   const normalizedMessage = message?.trim().toLowerCase() || "";
 
   if (!normalizedMessage) {
-    return "Nao foi possivel autenticar agora. Tente novamente.";
+    return "Não foi possível autenticar agora. Tente novamente.";
   }
 
   if (normalizedMessage.includes("invalid login credentials")) {
@@ -106,7 +106,7 @@ export const normalizeAuthError = (message?: string) => {
   }
 
   if (normalizedMessage.includes("user already registered")) {
-    return "Ja existe uma conta com este email.";
+    return "Já existe uma conta com este email.";
   }
 
   if (normalizedMessage.includes("signup is disabled")) {
@@ -126,10 +126,10 @@ export const normalizeAuthError = (message?: string) => {
   }
 
   if (normalizedMessage.includes("network") || normalizedMessage.includes("fetch")) {
-    return "Falha de conexao. Tente novamente em instantes.";
+    return "Falha de conexão. Tente novamente em instantes.";
   }
 
-  return "Nao foi possivel autenticar agora. Tente novamente.";
+  return "Não foi possível autenticar agora. Tente novamente.";
 };
 
 const buildFallbackProfile = (authUser: SupabaseUser): UserProfile => {
@@ -264,7 +264,7 @@ export const useAuth = create<AuthState>((rawSet, get) => {
         set({
           initialized: true,
           configured: true,
-          configError: "Nao foi possivel verificar sua sessao agora.",
+          configError: "Não foi possível verificar sua sessão agora.",
           debugMessage: `getSession: ${error.message}`,
           user: null,
           profile: null,
@@ -326,7 +326,7 @@ export const useAuth = create<AuthState>((rawSet, get) => {
       const passwordPolicyError = validatePasswordPolicy(password);
 
       if (!trimmedName) {
-        return { ok: false, error: "Nome obrigatorio." };
+        return { ok: false, error: "Nome obrigatório." };
       }
 
       if (passwordPolicyError) {
@@ -382,7 +382,7 @@ export const useAuth = create<AuthState>((rawSet, get) => {
 
       const normalizedEmail = normalizeEmail(email);
       if (!normalizedEmail) {
-        return { ok: false, error: "Informe seu email para reenviar a confirmacao." };
+        return { ok: false, error: "Informe seu email para reenviar a confirmação." };
       }
 
       const { error } = await supabase.auth.resend({
@@ -403,7 +403,7 @@ export const useAuth = create<AuthState>((rawSet, get) => {
 
       return {
         ok: true,
-        message: "Enviamos um novo link de confirmacao para seu email.",
+        message: "Enviamos um novo link de confirmação para seu email.",
       };
     },
     activateWithCode: async (code) => {
@@ -418,7 +418,7 @@ export const useAuth = create<AuthState>((rawSet, get) => {
       if (error) {
         return {
           ok: false,
-          error: "Nao foi possivel validar o codigo agora.",
+          error: "Não foi possível validar o código agora.",
           debug: `activate_access_code: ${error.message}`,
         };
       }
@@ -427,7 +427,7 @@ export const useAuth = create<AuthState>((rawSet, get) => {
         ? (data[0] as ActivateCodeResponse | undefined)
         : undefined;
       if (!result?.ok) {
-        return { ok: false, error: result?.message || "Codigo invalido ou expirado." };
+        return { ok: false, error: result?.message || "Código inválido ou expirado." };
       }
 
       await get().refreshProfile();
