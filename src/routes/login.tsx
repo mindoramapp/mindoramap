@@ -14,7 +14,18 @@ export const Route = createFileRoute("/login")({
 
 function LoginPage() {
   const { theme } = useTheme();
-  const { user, initialized, configured, configError, debugMessage, login, init } = useAuth();
+  const {
+    user,
+    initialized,
+    configured,
+    configError,
+    debugMessage,
+    login,
+    requestPasswordReset,
+    init,
+  } = useAuth();
+  // "Esqueci minha senha" swaps the form in place instead of opening another page.
+  const [recovering, setRecovering] = useState(false);
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -42,12 +53,31 @@ function LoginPage() {
     navigate({ to: user.role === "superadmin" || user.accessGranted ? "/dashboard" : "/activate" });
   }, [initialized, navigate, user]);
 
+  const switchMode = (next: boolean) => {
+    setRecovering(next);
+    setError("");
+    setSuccess("");
+    setDebug("");
+  };
+
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
     setDebug("");
     setSubmitting(true);
+
+    if (recovering) {
+      const reset = await requestPasswordReset(email);
+      setSubmitting(false);
+      if (reset.ok) setSuccess(reset.message || "");
+      else {
+        setError(reset.error || "Erro");
+        setDebug(reset.debug || "");
+      }
+      return;
+    }
+
     const result = await login(email, password);
     setSubmitting(false);
 
@@ -110,9 +140,11 @@ function LoginPage() {
           <span className="w-12 h-12 rounded-xl bg-[image:var(--gradient-hero)] grid place-items-center text-primary-foreground">
             <Brain />
           </span>
-          <h1 className="text-2xl font-bold">Entrar</h1>
+          <h1 className="text-2xl font-bold">{recovering ? "Recuperar senha" : "Entrar"}</h1>
           <p className="text-sm text-muted-foreground text-center">
-            Acesse sua conta com email, senha e liberação por código.
+            {recovering
+              ? "Informe o e-mail da sua conta. Enviaremos um link para criar uma nova senha."
+              : "Acesse seus mapas com e-mail e senha."}
           </p>
         </div>
         {!configured && (
@@ -122,7 +154,7 @@ function LoginPage() {
         )}
         <form onSubmit={submit} className="space-y-3">
           <label className="text-xs text-muted-foreground flex items-center gap-2">
-            <Mail size={12} /> Email
+            <Mail size={12} /> E-mail
           </label>
           <input
             type="email"
@@ -132,17 +164,35 @@ function LoginPage() {
             placeholder="voce@empresa.com"
             className="w-full px-3 py-2.5 rounded-lg bg-input border border-border outline-none focus:ring-2 focus:ring-ring"
           />
-          <label className="text-xs text-muted-foreground flex items-center gap-2">
-            <LockKeyhole size={12} /> Senha
-          </label>
-          <input
-            type="password"
-            required
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Sua senha"
-            className="w-full px-3 py-2.5 rounded-lg bg-input border border-border outline-none focus:ring-2 focus:ring-ring"
-          />
+          {!recovering && (
+            <>
+              <div className="flex items-center justify-between gap-2">
+                <label
+                  htmlFor="login-password"
+                  className="text-xs text-muted-foreground flex items-center gap-2"
+                >
+                  <LockKeyhole size={12} /> Senha
+                </label>
+                <button
+                  type="button"
+                  onClick={() => switchMode(true)}
+                  className="text-xs font-medium text-primary hover:underline pointer-coarse:min-h-11"
+                >
+                  Esqueci minha senha
+                </button>
+              </div>
+              <input
+                id="login-password"
+                type="password"
+                required
+                autoComplete="current-password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Sua senha"
+                className="w-full px-3 py-2.5 rounded-lg bg-input border border-border outline-none focus:ring-2 focus:ring-ring"
+              />
+            </>
+          )}
           {success && <p className="text-sm text-emerald-600">{success}</p>}
           {error && <p className="text-sm text-destructive">{error}</p>}
           {import.meta.env.DEV && debug && (
@@ -154,9 +204,24 @@ function LoginPage() {
             disabled={submitting || !configured}
             className="w-full py-2.5 rounded-lg bg-[image:var(--gradient-hero)] text-primary-foreground font-medium hover:opacity-90 transition-opacity disabled:cursor-not-allowed disabled:opacity-70"
           >
-            {submitting ? "Entrando..." : "Entrar"}
+            {recovering
+              ? submitting
+                ? "Enviando..."
+                : "Enviar link"
+              : submitting
+                ? "Entrando..."
+                : "Entrar"}
           </button>
         </form>
+        {recovering && (
+          <button
+            type="button"
+            onClick={() => switchMode(false)}
+            className="mt-3 w-full text-center text-sm text-muted-foreground hover:text-foreground pointer-coarse:min-h-11"
+          >
+            Voltar para o login
+          </button>
+        )}
         <p className="text-sm text-muted-foreground text-center mt-4">
           Primeiro acesso?{" "}
           <Link

@@ -48,6 +48,8 @@ interface AuthState {
   login: (email: string, password: string) => Promise<AuthResult>;
   register: (name: string, email: string, password: string) => Promise<AuthResult>;
   resendConfirmation: (email: string) => Promise<AuthResult>;
+  requestPasswordReset: (email: string) => Promise<AuthResult>;
+  updatePassword: (password: string) => Promise<AuthResult>;
   activateWithCode: (code: string) => Promise<AuthResult>;
   refreshProfile: () => Promise<void>;
   recordUsage: (seconds: number) => Promise<void>;
@@ -102,7 +104,7 @@ export const normalizeAuthError = (message?: string) => {
   }
 
   if (normalizedMessage.includes("invalid login credentials")) {
-    return "Email ou senha invalidos.";
+    return "E-mail ou senha incorretos.";
   }
 
   if (normalizedMessage.includes("user already registered")) {
@@ -110,11 +112,15 @@ export const normalizeAuthError = (message?: string) => {
   }
 
   if (normalizedMessage.includes("signup is disabled")) {
-    return "Cadastro indisponivel no momento.";
+    return "Cadastro indisponível no momento.";
   }
 
   if (normalizedMessage.includes("email address") && normalizedMessage.includes("invalid")) {
     return "Este e-mail não é válido ou não pode receber mensagens. Use um endereço que você acessa.";
+  }
+
+  if (normalizedMessage.includes("should be different")) {
+    return "A nova senha precisa ser diferente da atual.";
   }
 
   if (normalizedMessage.includes("rate limit")) {
@@ -405,6 +411,58 @@ export const useAuth = create<AuthState>((rawSet, get) => {
         ok: true,
         message: "Enviamos um novo link de confirmação para seu email.",
       };
+    },
+    requestPasswordReset: async (email) => {
+      if (!supabase) {
+        return { ok: false, error: getConfigError(), debug: "Supabase client ausente." };
+      }
+
+      const normalizedEmail = normalizeEmail(email);
+      if (!normalizedEmail) {
+        return { ok: false, error: "Informe o e-mail da sua conta." };
+      }
+
+      const { error } = await supabase.auth.resetPasswordForEmail(normalizedEmail, {
+        redirectTo: getAuthRedirectUrl(),
+      });
+
+      if (error) {
+        return {
+          ok: false,
+          error: normalizeAuthError(error.message),
+          debug: `resetPasswordForEmail: ${error.message}`,
+        };
+      }
+
+      // Same answer whether or not the account exists, so the form can't be used to probe emails.
+      return {
+        ok: true,
+        message:
+          "Se houver uma conta com esse e-mail, você vai receber um link para criar uma nova senha. Confira também a caixa de spam.",
+      };
+    },
+    updatePassword: async (password) => {
+      if (!supabase) {
+        return { ok: false, error: getConfigError(), debug: "Supabase client ausente." };
+      }
+
+      const passwordPolicyError = validatePasswordPolicy(password);
+      if (passwordPolicyError) {
+        return { ok: false, error: passwordPolicyError };
+      }
+
+      const { error } = await supabase.auth.updateUser({ password });
+      if (error) {
+        return {
+          ok: false,
+          error: error.message.toLowerCase().includes("session")
+            ? "O link de recuperação expirou. Peça um novo na tela de login."
+            : normalizeAuthError(error.message),
+          debug: `updateUser: ${error.message}`,
+        };
+      }
+
+      return { ok: true, message: "Senha alterada." };
     },
     activateWithCode: async (code) => {
       if (!supabase) {

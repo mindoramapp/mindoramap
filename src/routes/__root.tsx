@@ -1,4 +1,4 @@
-import { Outlet, Link, createRootRoute } from "@tanstack/react-router";
+import { Outlet, Link, createRootRoute, useNavigate } from "@tanstack/react-router";
 import type { EmailOtpType } from "@supabase/supabase-js";
 import { useEffect, useState } from "react";
 import { Toaster } from "@/components/ui/sonner";
@@ -41,7 +41,8 @@ export const Route = createRootRoute({
 
 function RootComponent() {
   const [processingAuth, setProcessingAuth] = useState(true);
-  const [authMessage, setAuthMessage] = useState<string | null>(null);
+  const [authMessage, setAuthMessage] = useState<{ ok: boolean; text: string } | null>(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     if (typeof window === "undefined") return;
@@ -64,6 +65,16 @@ function RootComponent() {
       const hashType = hashParams.get("type");
       const callbackType = type || hashType;
       const loginHref = `${window.location.pathname}#/login`;
+      // Password recovery links sign the person in; they go straight to choosing a new password.
+      const goToPasswordReset = () => {
+        window.history.replaceState(
+          {},
+          document.title,
+          `${window.location.pathname}#/reset-password`,
+        );
+        setProcessingAuth(false);
+        void navigate({ to: "/reset-password", replace: true });
+      };
 
       if (errorCode || errorDescription || hashErrorCode || hashErrorDescription) {
         const decodedError = decodeURIComponent(
@@ -76,7 +87,7 @@ function RootComponent() {
             : "Não foi possível confirmar seu email. Tente novamente.";
 
         setAuthFeedback(message);
-        setAuthMessage(message);
+        setAuthMessage({ ok: false, text: message });
         window.history.replaceState({}, document.title, loginHref);
         setProcessingAuth(false);
         return;
@@ -98,9 +109,14 @@ function RootComponent() {
             ? "Seu link de confirmação expirou. Solicite um novo email para continuar."
             : "Não foi possível confirmar seu email. Solicite um novo link e tente novamente.";
           setAuthFeedback(message);
-          setAuthMessage(message);
+          setAuthMessage({ ok: false, text: message });
           window.history.replaceState({}, document.title, loginHref);
           setProcessingAuth(false);
+          return;
+        }
+
+        if (callbackType === "recovery") {
+          goToPasswordReset();
           return;
         }
 
@@ -109,7 +125,7 @@ function RootComponent() {
             ? "Email confirmado com sucesso. Agora você pode entrar."
             : "Acesso validado com sucesso.";
         setAuthFeedback(message);
-        setAuthMessage(message);
+        setAuthMessage({ ok: true, text: message });
         window.history.replaceState({}, document.title, loginHref);
         setProcessingAuth(false);
         return;
@@ -130,20 +146,25 @@ function RootComponent() {
           ? "Seu link de confirmação expirou. Solicite um novo email para continuar."
           : "Não foi possível confirmar seu email. Solicite um novo link e tente novamente.";
         setAuthFeedback(message);
-        setAuthMessage(message);
+        setAuthMessage({ ok: false, text: message });
         window.history.replaceState({}, document.title, loginHref);
         setProcessingAuth(false);
         return;
       }
 
+      if (callbackType === "recovery") {
+        goToPasswordReset();
+        return;
+      }
+
       setAuthFeedback("Email confirmado com sucesso. Agora você pode entrar.");
-      setAuthMessage("Conta criada com sucesso. Agora você pode fazer login.");
+      setAuthMessage({ ok: true, text: "Conta criada com sucesso. Agora você pode fazer login." });
       window.history.replaceState({}, document.title, loginHref);
       setProcessingAuth(false);
     };
 
     void handleAuthCallback();
-  }, []);
+  }, [navigate]);
 
   if (processingAuth) {
     return (
@@ -160,8 +181,10 @@ function RootComponent() {
     return (
       <div className="flex min-h-dvh items-center justify-center bg-background px-4">
         <div className="max-w-md rounded-2xl border border-border bg-card p-8 text-center shadow-[var(--shadow-soft)]">
-          <h1 className="text-2xl font-semibold text-foreground">Conta confirmada</h1>
-          <p className="mt-3 text-sm text-muted-foreground">{authMessage}</p>
+          <h1 className="text-2xl font-semibold text-foreground">
+            {authMessage.ok ? "Conta confirmada" : "Link inválido ou expirado"}
+          </h1>
+          <p className="mt-3 text-sm text-muted-foreground">{authMessage.text}</p>
           <a
             href={`${window.location.pathname}#/login`}
             className="mt-6 inline-flex items-center justify-center rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
