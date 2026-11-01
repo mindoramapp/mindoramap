@@ -33,3 +33,8 @@ dist-ssr
 
 # Supabase
 supabase/setup.generated.sql
+
+# Divulgação: vídeos, imagens e gravações ficam fora do Git (os textos são versionados)
+divulgacao/brutos/
+divulgacao/video/
+divulgacao/canva/

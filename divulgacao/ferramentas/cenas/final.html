@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Final</title>
+<!-- Cena 9: tela final da marca. ?cta=bio (redes com bio) ou ?cta=url (YouTube, LinkedIn). -->
+<style>
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: radial-gradient(circle at 30% 20%, rgba(49,119,220,.45), transparent 55%),
+                radial-gradient(circle at 75% 80%, rgba(0,177,196,.35), transparent 55%), #06090F;
+    color: #fff; font-family: "Noto Sans", system-ui, sans-serif;
+    display: grid; place-items: center; overflow: hidden; text-align: center;
+  }
+  .bloco { display: grid; justify-items: center; gap: 3vmin; padding: 6vmin; }
+  .logo {
+    width: 22vmin; height: 22vmin; border-radius: 22%;
+    box-shadow: 0 2vmin 8vmin -2vmin rgba(0,177,196,.6);
+    animation: entra .6s cubic-bezier(.2,.9,.3,1.3) both, pulso 2s ease-in-out .8s infinite;
+  }
+  /* The app icon already has its rounded gradient square. */
+  .logo img { width: 100%; height: 100%; display: block; }
+  h1 { font-size: 11vmin; margin: 1vmin 0 0; letter-spacing: -.03em; animation: sobe .5s .25s both; }
+  .frase { font-size: 5.2vmin; opacity: .92; animation: sobe .5s .45s both; }
+  .botao {
+    margin-top: 2vmin; font-size: 5vmin; font-weight: 700; padding: 2.6vmin 6vmin; border-radius: 999px;
+    background: linear-gradient(135deg, #3177DC, #00B1C4); animation: sobe .5s .65s both;
+  }
+  .url { font-size: 4.2vmin; opacity: .8; animation: sobe .5s .85s both; }
+  @keyframes entra { from { transform: scale(.4); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+  @keyframes pulso { 50% { transform: scale(1.05); } }
+  @keyframes sobe { from { transform: translateY(3vmin); opacity: 0; } to { transform: none; opacity: 1; } }
+</style>
+</head>
+<body>
+  <div class="bloco">
+    <div class="logo"><img src="../../../public/icon.svg" alt=""></div>
+    <h1>Mindora</h1>
+    <div class="frase">Mapa mental que te faz lembrar.</div>
+    <div class="botao">Crie sua conta grátis</div>
+    <div class="url" id="url">link na bio</div>
+  </div>
+  <script>
+    if (new URLSearchParams(location.search).get("cta") === "url")
+      document.getElementById("url").textContent = "mindoramapp.github.io";
+  </script>
+</body>
+</html>
