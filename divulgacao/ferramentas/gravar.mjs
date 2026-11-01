@@ -6,7 +6,7 @@
 // The Chrome profile in ~/.cache/mindora-gravacao must already be signed in to the demo account
 // (see 00_PLANO_DE_ACAO.md); this script never types a password.
 import { spawn, execFileSync } from "node:child_process";
-import { lstatSync, mkdirSync, rmSync, writeFileSync } from "node:fs";
+import { mkdirSync, readlinkSync, rmSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -39,10 +39,11 @@ const wanted = onlyScenes.length ? order.filter((name) => onlyScenes.includes(na
 // even while the signed-in profile is open in a visible Chrome.
 const needsLogin = wanted.some((name) => name !== "c1_resumo" && name !== "c9_final");
 const profile = needsLogin ? PROFILE : join(ROOT, "brutos", "perfil-sem-login");
-// SingletonLock is a symlink to "host-pid", so existsSync (which follows links) can't see it.
+// SingletonLock is a symlink to "host-pid"; a lock left by a Chrome that is gone doesn't count.
 const profileInUse = () => {
   try {
-    lstatSync(join(PROFILE, "SingletonLock"));
+    const pid = Number(readlinkSync(join(PROFILE, "SingletonLock")).split("-").pop());
+    process.kill(pid, 0);
     return true;
   } catch {
     return false;
@@ -221,6 +222,19 @@ async function click(x, y, { double = false } = {}) {
   await sleep(250);
 }
 
+/** Drags with the left button from (x, y) by (dx, dy): pans the canvas when started on empty space. */
+async function drag(x, y, dx, dy) {
+  await moveTo(x, y, 200);
+  await send("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", buttons: 1, clickCount: 1 });
+  for (let i = 1; i <= 20; i++) {
+    mouse = { x: x + (dx * i) / 20, y: y + (dy * i) / 20 };
+    await send("Input.dispatchMouseEvent", { type: "mouseMoved", ...mouse, button: "left", buttons: 1 });
+    await sleep(20);
+  }
+  await send("Input.dispatchMouseEvent", { type: "mouseReleased", ...mouse, button: "left", buttons: 0, clickCount: 1 });
+  await sleep(300);
+}
+
 const KEYS = {
   Tab: { code: "Tab", windowsVirtualKeyCode: 9 },
   Enter: { code: "Enter", windowsVirtualKeyCode: 13, text: "\r" },
@@ -326,18 +340,44 @@ async function openMapByTitle(title) {
   await sleep(3000);
 }
 
-/** Demo maps: a blank "Fotossíntese" for the typing scene and the full one, imported. */
-async function prepareMaps() {
-  await go(`${APP}#/dashboard`, 4000);
-  const titles = await evaluate(`[...document.querySelectorAll("h3")].map((h) => h.textContent.trim())`);
-  if (!titles.includes("Fotossíntese (Enem)")) {
-    await clickOn("button", "Novo mapa");
-    const { root } = await send("DOM.getDocument", { depth: -1 });
-    const { nodeId } = await send("DOM.querySelector", { nodeId: root.nodeId, selector: 'input[type="file"]' });
-    await send("DOM.setFileInputFiles", { nodeId, files: [join(HERE, "mapa-fotossintese.json")] });
-    await sleep(4000);
-    console.log("Mapa completo importado.");
+/** Clicks empty canvas: no selection, so no branch is dimmed by the focus effect. */
+const deselect = () => click(40, format.height * 0.3);
+const centerMap = async () => {
+  await evaluate(`window.dispatchEvent(new Event("mm-center"))`);
+  await sleep(500);
+};
+
+/** Deletes every demo-account map with exactly this title, through the card's ⋯ menu. */
+async function deleteMaps(title) {
+  for (let round = 0; round < 6; round++) {
+    await go(`${APP}#/dashboard`, 3500);
+    const menu = await evaluate(`(() => {
+      const card = [...document.querySelectorAll("h3")].find((h) => h.textContent.trim() === ${JSON.stringify(title)})
+        ?.closest("[draggable]");
+      const button = card?.querySelector('button[aria-label="Ações do mapa"]');
+      if (!button) return null;
+      const r = button.getBoundingClientRect();
+      return { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+    })()`);
+    if (!menu) return;
+    await click(menu.x, menu.y);
+    await clickOn('[role="menuitem"]', "Excluir");
+    await sleep(400);
+    await clickOn('[role="dialog"] button', "Excluir");
+    await sleep(1500);
   }
+}
+
+/** Demo maps start fresh on every run: the full map is imported scattered, so "Organizar" shows. */
+async function prepareMaps() {
+  await deleteMaps("Fotossíntese (Enem)");
+  await deleteMaps("Fotossíntese");
+  await go(`${APP}#/dashboard`, 3500);
+  const { root } = await send("DOM.getDocument", { depth: -1 });
+  const { nodeId } = await send("DOM.querySelector", { nodeId: root.nodeId, selector: 'input[type="file"]' });
+  await send("DOM.setFileInputFiles", { nodeId, files: [join(HERE, "mapa-fotossintese.json")] });
+  await sleep(4000);
+  console.log("Mapa completo importado.");
 }
 
 async function newBlankMap(title) {
@@ -361,34 +401,40 @@ const SCENES = {
   },
   async c2c3_criar() {
     await newBlankMap("Fotossíntese");
+    // Fixed framing at normal zoom: the central idea on the left third, so the branches grow
+    // right and down inside the screen. (Re-fitting after each idea zoomed and pushed it off.)
+    const start = await node("Fotossíntese");
+    await drag(start.x + 260, start.y + 260, format.width * 0.2 - start.x, format.height * 0.33 - start.y);
+    await deselect();
+    const idea = async (key, text) => {
+      await press(key, 550);
+      await type(text);
+      await press("Enter", 450);
+    };
     await record("c2c3_criar", async () => {
-      await sleep(700);
+      await sleep(600);
       const root = await node("Fotossíntese");
       await click(root.x, root.y);
-      await press("Tab", 600);
-      await type("O que é");
-      await press("Enter", 400);
-      await press("Enter", 600);
-      await type("Onde acontece");
-      await press("Enter", 400);
-      await press("Enter", 600);
-      await type("Fases");
-      await press("Tab", 600);
-      await type("Fase clara");
-      await press("Enter", 400);
-      await press("Enter", 600);
-      await type("Ciclo de Calvin");
-      await press("Enter", 600);
+      await idea("Tab", "O que é");
+      await idea("Enter", "Onde acontece");
+      await idea("Enter", "Fases");
+      await idea("Tab", "Fase clara");
+      await idea("Enter", "Ciclo de Calvin");
+      await sleep(400);
     });
   },
   async c4_organizar() {
     await openMapByTitle("Fotossíntese (Enem)");
     await clickOn('button[aria-label="Grafo"]');
     await sleep(800);
+    await deselect();
     await record("c4_organizar", async () => {
-      await sleep(600);
+      await sleep(500);
       await clickOn('button[aria-label="Organizar"]');
-      await sleep(1600);
+      await sleep(1100);
+      await centerMap();
+      await deselect();
+      await sleep(600);
     });
   },
   async c5_conectar() {
@@ -407,7 +453,7 @@ const SCENES = {
       await clickOn('button[aria-label="Aparência"]');
       await sleep(500);
       for (const preset of ["Pastel", "Neon", "Padrão"]) {
-        await clickOn('[role="radiogroup"] button', preset);
+        await clickOn("button[aria-pressed]", preset);
         await sleep(700);
       }
       await clickOn('button[aria-label="Fechar aparência"]');
@@ -426,6 +472,9 @@ const SCENES = {
   },
   async c8_celular() {
     await openMapByTitle("Fotossíntese (Enem)");
+    await clickOn('button[aria-label="Organizar"]');
+    await sleep(1200);
+    await centerMap();
     await record("c8_celular", async () => {
       const root = await node("Fotossíntese");
       await click(root.x, root.y);
@@ -444,7 +493,8 @@ const SCENES = {
 
 try {
   mkdirSync(OUT, { recursive: true });
-  if (needsLogin) await prepareMaps();
+  // The phone scene reuses the map the desktop runs left organized.
+  if (needsLogin && !format.mobile) await prepareMaps();
   for (const name of wanted) await SCENES[name]();
 } finally {
   ws.close();

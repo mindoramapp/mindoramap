@@ -61,3 +61,25 @@ divulgacao/
 - **Máquina com 8 GB**: gravar e codificar um formato por vez.
 - **Música**: não incluir faixa de terceiros no arquivo; o corte foi pensado para batidas de
   ~120 BPM (cortes a cada 1 s ou 2 s) e encaixa em áudios populares.
+
+## Como refazer
+
+```bash
+# 1. Sessão da conta demo (uma vez; o login é feito pelo usuário na janela que abre)
+google-chrome --user-data-dir=$HOME/.cache/mindora-gravacao https://mindoramapp.github.io/#/login
+# feche essa janela antes de gravar
+
+# 2. Gravar (cada formato recria os mapas de demonstração e grava as cenas)
+node divulgacao/ferramentas/gravar.mjs 9x16
+node divulgacao/ferramentas/gravar.mjs celular      # cena do celular, usada pelos três formatos
+node divulgacao/ferramentas/gravar.mjs 4x5
+node divulgacao/ferramentas/gravar.mjs 16x9
+node divulgacao/ferramentas/gravar.mjs 9x16 c7_revisar   # só uma cena
+
+# 3. Editar (gancho A, B ou C do roteiro)
+divulgacao/ferramentas/editar.sh 9x16
+divulgacao/ferramentas/editar.sh 9x16 B   # gera mindora_9x16_ganchoB.mp4
+```
+
+Ajustes de tempo e textos ficam em `editar.sh` (função `segment` de cada cena); as ações gravadas
+ficam em `gravar.mjs` (objeto `SCENES`).

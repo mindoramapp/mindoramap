@@ -54,6 +54,8 @@ segment() {
     -map "[v]" -map 1:a -t "$seconds" -c:v libx264 -crf 18 -preset veryfast -c:a aac -b:a 128k "$out"
 }
 
+# CAPA_SO=1 editar.sh <formato>: only the cover, without re-editing the video.
+if [ -z "${CAPA_SO:-}" ]; then
 echo "== $FMT: cenas"
 
 # 1. Hook: the dense summary pushes in, blurs and darkens; big question in the middle.
@@ -63,14 +65,23 @@ ffmpeg -v error -y -i "$TMP/s1_base.mp4" -filter_complex \
   -map "[v]" -map 0:a -c:v libx264 -crf 18 -preset veryfast -c:a copy "$TMP/s1.mp4"
 
 # 2-3. From summary to map: typing the branches, sped up.
-segment "$RAW/c2c3_criar.mp4" "$TMP/s2.mp4" 9.5 0.08 \
-  "$(caption 0 2.5 'Transforme em mapa.')" "$(caption 2.5 9.5 'Tab cria. Enter continua.')"
+segment "$RAW/c2c3_criar.mp4" "$TMP/s2.mp4" 9 0.08 \
+  "$(caption 0 2.5 'Transforme em mapa.')" "$(caption 2.5 9 'Tab cria. Enter continua.')"
 # 4-6. Organize, connect, theme.
 segment "$RAW/c4_organizar.mp4" "$TMP/s4.mp4" 3 0.06 "$(caption 0.1 3 'Organiza sozinho.')"
 segment "$RAW/c5_conectar.mp4" "$TMP/s5.mp4" 3 0.06 "$(caption 0.1 3 'Ligue os assuntos.')"
-segment "$RAW/c6_aparencia.mp4" "$TMP/s6.mp4" 3 0.04 "$(caption 0.1 3 'Do seu jeito.')"
-# 7. Review mode.
-segment "$RAW/c7_revisar.mp4" "$TMP/s7.mp4" 7 0.10 \
+segment "$RAW/c6_aparencia.mp4" "$TMP/s6.mp4" 4 0.04 "$(caption 0.1 4 'Do seu jeito.')"
+# 7. Review mode. In the tall formats the review card sits at the top of an empty page: cut the
+# top band and center it on the brand gradient.
+C7="$RAW/c7_revisar.mp4"
+if [ "$FMT" != 16x9 ]; then
+  BAND=$([ "$FMT" = 9x16 ] && echo 0.42 || echo 0.62)
+  ffmpeg -v error -y -i "$C7" -f lavfi -i "gradients=s=${W}x${H}:c0=0x17305e:c1=0x06090F:x0=0:y0=0:x1=$W:y1=$H:d=60:r=$FPS" \
+    -filter_complex "[0:v]scale=$W:$H,crop=$W:ih*$BAND:0:0[band];[1:v][band]overlay=x=0:y=(H-h)/2-$((H/14)):shortest=1,format=yuv420p[v]" \
+    -map "[v]" -c:v libx264 -crf 16 -preset veryfast "$TMP/c7_comp.mp4"
+  C7="$TMP/c7_comp.mp4"
+fi
+segment "$C7" "$TMP/s7.mp4" 7 0.10 \
   "$(caption 0.1 3.5 'Vira cartão de revisão.')" "$(caption 3.5 7 'Revise na hora certa.')"
 
 # 8. Phone: the mobile recording inside a phone frame that slides up over the brand gradient.
@@ -117,9 +128,20 @@ ffmpeg -v error -y -i "$TMP/s1.mp4" -i "$TMP/meio.mp4" -i "$TMP/s9.mp4" -filter_
   -map "[v]" -map "[au]" -c:v libx264 -profile:v high -crf 20 -preset slow -pix_fmt yuv420p \
   -c:a aac -b:a 128k -movflags +faststart "$FINAL"
 
-# Cover: the organized map with the title and a "grátis" tag.
-ffmpeg -v error -y -sseof -0.2 -i "$TMP/s4.mp4" -frames:v 1 -vf \
-  "eq=brightness=-0.18,$(caption 0 99 'Mapa mental que' "$BIG" "$([ "$FMT" = 16x9 ] && echo 300 || echo 520)"),$(caption 0 99 'te faz lembrar.' "$BIG" "$([ "$FMT" = 16x9 ] && echo 460 || echo 690)"),drawtext=fontfile=$FONT:text='GRÁTIS':fontsize=$((FS-6)):fontcolor=white:box=1:boxcolor=0x00B1C4:boxborderw=22:x=$CAP_X:y=$([ "$FMT" = 16x9 ] && echo 640 || echo 900)" \
-  "$OUT/capa_${FMT}.jpg"
+fi
 
+# Cover: the organized map (raw frame, no caption), softened and darkened, with a static title
+# and a "grátis" tag. Static drawtext: the caption fade-in needs a running clock.
+printf '%s' "Mapa mental que" > "$TMP/capa1.txt"
+printf '%s' "te faz lembrar." > "$TMP/capa2.txt"
+read -r CX CY1 CY2 CY3 < <(case "$FMT" in
+  9x16) echo "(w-text_w)/2 640 790 980" ;;
+  4x5)  echo "(w-text_w)/2 420 560 740" ;;
+  16x9) echo "110 330 470 650" ;;
+esac)
+ffmpeg -v error -y -sseof -0.2 -i "$RAW/c4_organizar.mp4" -frames:v 1 -vf \
+  "scale=$W:$H,gblur=sigma=1.5,eq=brightness=-0.12:saturation=1.3,drawtext=fontfile=$FONT:textfile=$TMP/capa1.txt:fontsize=$BIG:fontcolor=white:x=$CX:y=$CY1,drawtext=fontfile=$FONT:textfile=$TMP/capa2.txt:fontsize=$BIG:fontcolor=0x00B1C4:x=$CX:y=$CY2,drawtext=fontfile=$FONT:text='GRÁTIS':fontsize=$FS:fontcolor=white:box=1:boxcolor=0x3177DC:boxborderw=24:x=$CX:y=$CY3,drawbox=x=0:y=0:w=iw:h=12:color=0x00B1C4:t=fill" \
+  -q:v 2 "$OUT/capa_${FMT}.jpg"
+
+[ -n "${CAPA_SO:-}" ] && { echo "Capa: $OUT/capa_${FMT}.jpg"; exit 0; }
 echo "Pronto: $FINAL ($(python3 -c "print(round($(dur "$FINAL"),1))") s, $(du -h "$FINAL" | cut -f1)) e capa_${FMT}.jpg"
