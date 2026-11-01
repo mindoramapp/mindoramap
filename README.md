@@ -91,9 +91,17 @@ nem de acesso ao seu projeto.
 
 ## Planos e pagamento por Pix
 
-Planos: **Free** (3 mapas, 50 nós, 1 pasta), **Plus** (R$ 14,90/mês: 15 mapas, 150 nós,
-5 pastas) e **Pro** (R$ 24,90/mês: 100 mapas, 500 nós, 30 pastas). Preços e limites ficam na
-tabela `plans` e podem ser alterados sem deploy.
+Planos ativos (valores da tabela `plans` em 01/11/2026):
+
+| Plano | `id` | Preço | Mapas | Balões por mapa | Pastas | Revisão |
+| --- | --- | --- | --- | --- | --- | --- |
+| Free | `free` | grátis | 5 | 100 | 2 | 1 mapa |
+| Estudante | `plus` | R$ 9,90 por 30 dias | 30 | 300 | 15 | todos |
+| Estudante semestral | `plus_semester` | R$ 49,90 por 183 dias | 30 | 300 | 15 | todos |
+| Pro | `pro` | R$ 19,90 por 30 dias | ilimitados | 1.000 | ilimitadas | todos |
+
+Todos exportam em PNG e SVG. Preços e limites ficam na tabela `plans` e podem ser alterados sem
+deploy, então confira a página **Planos** antes de citar valores em divulgação.
 
 O pagamento é **Pix direto para a chave do administrador**, sem gateway e sem cartão:
 
@@ -116,14 +124,14 @@ Pago, Asaas…) pode automatizar esse passo no futuro sem mudar o resto.
   `20261101010000_open_signup.sql`); basta confirmar o e-mail. Os códigos de acesso do painel
   admin continuam funcionando, e `has_app_access()` (exigida por todas as políticas RLS de
   conteúdo) ainda barra contas bloqueadas.
-- **Planos:** a tabela `plans` é a fonte única de preços e limites (Free, Plus e Pro). Mudar um limite ou preço é um `UPDATE` nessa tabela, sem deploy.
+- **Planos:** a tabela `plans` é a fonte única de preços e limites (Free, Estudante e Pro). Mudar um limite ou preço é um `UPDATE` nessa tabela, sem deploy.
 - **Aplicação no banco:** triggers recusam criar mapas, pastas ou nós acima do limite do
   plano efetivo, com o erro `PLAN_LIMIT:<limite>`. Um downgrade nunca apaga dados: o que já
   existe continua acessível, e só o crescimento é bloqueado.
 - **Frontend:** `src/features/subscriptions` lê os mesmos dados (`get_my_entitlements()`) e
   expõe regras como `can(entitlements, "export_pdf")`. Nenhum componente compara nomes de plano.
 - **Assinaturas:** a tabela `subscriptions` é escrita apenas pelo backend (webhooks de
-  pagamento, na Etapa 7) ou por admins. Sem assinatura, o usuário está no FREE.
+  pagamento, na Etapa 7) ou por admins. Sem assinatura, o usuário está no Free.
 
 A arquitetura completa e o plano de evolução estão em [docs/ARQUITETURA.md](docs/ARQUITETURA.md).
 

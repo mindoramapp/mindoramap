@@ -8,7 +8,7 @@ as decisões de arquitetura e a ordem de implementação.
 
 | Tema                 | Decisão                                                                                  |
 | -------------------- | ---------------------------------------------------------------------------------------- |
-| Acesso               | **Continua por convite.** Cadastro exige código do admin; quem é liberado entra no FREE. |
+| Acesso               | **Cadastro aberto (desde 01/11/2026).** Basta confirmar o e-mail; a conta já entra no Free. Códigos do admin continuam válidos. |
 | Armazenamento de nós | **JSONB no mapa**, com `version` para controle de concorrência.                          |
 | Gateway de pagamento | **Pix manual por enquanto:** QR/copia e cola para a chave do dono, confirmação no admin. |
 | Planos               | **Free / Estudante (R$ 9,90/mês ou R$ 49,90/semestre) / Pro (R$ 19,90)**, 30 ou 183 dias por pagamento, aviso 10 dias antes. Free revisa 1 mapa. |
@@ -198,10 +198,10 @@ aplicadas antes do deploy do frontend novo: o `upsert` antigo continua funcionan
 - `/forgot-password` (`resetPasswordForEmail`) e `/reset-password` (`updateUser`).
 - "Lembrar-me": storage do Supabase alternando entre `localStorage` e `sessionStorage`.
 - Aceite de termos gravado em `profiles.terms_accepted_at` pelo trigger de criação do usuário.
-- **Convite mantido:** a conta só usa o produto depois de ativada com código
-  (`access_granted_at`), e então entra no plano FREE. O admin também pode bloquear usuários
-  (`status = 'blocked'`). A função `has_app_access()` concentra essa regra, e todas as
-  políticas RLS de conteúdo a exigem.
+- **Cadastro aberto (01/11/2026):** o gatilho de cadastro já preenche `access_granted_at`
+  (migração `20261101010000_open_signup.sql`), e a conta entra no plano Free assim que o e-mail
+  é confirmado. O admin ainda pode bloquear usuários (`status = 'blocked'`). A função
+  `has_app_access()` concentra essa regra, e todas as políticas RLS de conteúdo a exigem.
 - A tabela `user_profiles` mantém o nome atual (renomear para `profiles` só geraria risco).
 - O backend nunca recebe `user_id` do cliente: tudo usa `auth.uid()`.
 
