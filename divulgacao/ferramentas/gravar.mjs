@@ -33,7 +33,15 @@ const OUT = join(ROOT, "brutos", formatName);
 
 const order = format.mobile
   ? ["c8_celular"]
-  : ["c1_resumo", "c2c3_criar", "c4_organizar", "c5_conectar", "c6_aparencia", "c7_revisar", "c9_final"];
+  : [
+      "c1_resumo",
+      "c2c3_criar",
+      "c4_organizar",
+      "c5_conectar",
+      "c6_aparencia",
+      "c7_revisar",
+      "c9_final",
+    ];
 const wanted = onlyScenes.length ? order.filter((name) => onlyScenes.includes(name)) : order;
 // The two HTML scenes need no account: they use a throwaway profile, so they can be recorded
 // even while the signed-in profile is open in a visible Chrome.
@@ -113,7 +121,8 @@ const send = (method, params = {}) =>
     pending.set(id, { ok, fail });
     ws.send(JSON.stringify({ id, method, params }));
   });
-const on = (method, listener) => listeners.set(method, [...(listeners.get(method) ?? []), listener]);
+const on = (method, listener) =>
+  listeners.set(method, [...(listeners.get(method) ?? []), listener]);
 
 const evaluate = async (expression) => {
   const { result, exceptionDetails } = await send("Runtime.evaluate", {
@@ -216,8 +225,20 @@ async function moveTo(x, y, ms = 380) {
 async function click(x, y, { double = false } = {}) {
   await moveTo(x, y);
   for (let count = 1; count <= (double ? 2 : 1); count++) {
-    await send("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", clickCount: count });
-    await send("Input.dispatchMouseEvent", { type: "mouseReleased", x, y, button: "left", clickCount: count });
+    await send("Input.dispatchMouseEvent", {
+      type: "mousePressed",
+      x,
+      y,
+      button: "left",
+      clickCount: count,
+    });
+    await send("Input.dispatchMouseEvent", {
+      type: "mouseReleased",
+      x,
+      y,
+      button: "left",
+      clickCount: count,
+    });
   }
   await sleep(250);
 }
@@ -225,13 +246,31 @@ async function click(x, y, { double = false } = {}) {
 /** Drags with the left button from (x, y) by (dx, dy): pans the canvas when started on empty space. */
 async function drag(x, y, dx, dy) {
   await moveTo(x, y, 200);
-  await send("Input.dispatchMouseEvent", { type: "mousePressed", x, y, button: "left", buttons: 1, clickCount: 1 });
+  await send("Input.dispatchMouseEvent", {
+    type: "mousePressed",
+    x,
+    y,
+    button: "left",
+    buttons: 1,
+    clickCount: 1,
+  });
   for (let i = 1; i <= 20; i++) {
     mouse = { x: x + (dx * i) / 20, y: y + (dy * i) / 20 };
-    await send("Input.dispatchMouseEvent", { type: "mouseMoved", ...mouse, button: "left", buttons: 1 });
+    await send("Input.dispatchMouseEvent", {
+      type: "mouseMoved",
+      ...mouse,
+      button: "left",
+      buttons: 1,
+    });
     await sleep(20);
   }
-  await send("Input.dispatchMouseEvent", { type: "mouseReleased", ...mouse, button: "left", buttons: 0, clickCount: 1 });
+  await send("Input.dispatchMouseEvent", {
+    type: "mouseReleased",
+    ...mouse,
+    button: "left",
+    buttons: 0,
+    clickCount: 1,
+  });
   await sleep(300);
 }
 
@@ -248,7 +287,12 @@ const KEYS = {
 async function press(key, wait = 350) {
   const info = KEYS[key];
   await send("Input.dispatchKeyEvent", { type: "keyDown", key, ...info });
-  await send("Input.dispatchKeyEvent", { type: "keyUp", key, code: info.code, windowsVirtualKeyCode: info.windowsVirtualKeyCode });
+  await send("Input.dispatchKeyEvent", {
+    type: "keyUp",
+    key,
+    code: info.code,
+    windowsVirtualKeyCode: info.windowsVirtualKeyCode,
+  });
   await sleep(wait);
 }
 
@@ -323,9 +367,24 @@ async function record(name, act, tail = 600) {
   writeFileSync(join(dir, "lista.txt"), lines.join("\n"));
   const clip = join(OUT, `${name}.mp4`);
   execFileSync("ffmpeg", [
-    "-y", "-loglevel", "error", "-f", "concat", "-safe", "0", "-i", join(dir, "lista.txt"),
-    "-vf", "fps=30,format=yuv420p,scale=trunc(iw/2)*2:trunc(ih/2)*2",
-    "-c:v", "libx264", "-crf", "16", "-preset", "veryfast", clip,
+    "-y",
+    "-loglevel",
+    "error",
+    "-f",
+    "concat",
+    "-safe",
+    "0",
+    "-i",
+    join(dir, "lista.txt"),
+    "-vf",
+    "fps=30,format=yuv420p,scale=trunc(iw/2)*2:trunc(ih/2)*2",
+    "-c:v",
+    "libx264",
+    "-crf",
+    "16",
+    "-preset",
+    "veryfast",
+    clip,
   ]);
   console.log(`${name}: ${frames.length} quadros, ${(ended - started).toFixed(1)} s → ${clip}`);
 }
@@ -374,7 +433,10 @@ async function prepareMaps() {
   await deleteMaps("Fotossíntese");
   await go(`${APP}#/dashboard`, 3500);
   const { root } = await send("DOM.getDocument", { depth: -1 });
-  const { nodeId } = await send("DOM.querySelector", { nodeId: root.nodeId, selector: 'input[type="file"]' });
+  const { nodeId } = await send("DOM.querySelector", {
+    nodeId: root.nodeId,
+    selector: 'input[type="file"]',
+  });
   await send("DOM.setFileInputFiles", { nodeId, files: [join(HERE, "mapa-fotossintese.json")] });
   await sleep(4000);
   console.log("Mapa completo importado.");
@@ -404,7 +466,12 @@ const SCENES = {
     // Fixed framing at normal zoom: the central idea on the left third, so the branches grow
     // right and down inside the screen. (Re-fitting after each idea zoomed and pushed it off.)
     const start = await node("Fotossíntese");
-    await drag(start.x + 260, start.y + 260, format.width * 0.2 - start.x, format.height * 0.33 - start.y);
+    await drag(
+      start.x + 260,
+      start.y + 260,
+      format.width * 0.2 - start.x,
+      format.height * 0.33 - start.y,
+    );
     await deselect();
     const idea = async (key, text) => {
       await press(key, 550);
