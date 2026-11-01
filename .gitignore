@@ -38,3 +38,4 @@ supabase/setup.generated.sql
 divulgacao/brutos/
 divulgacao/video/
 divulgacao/canva/
+divulgacao/instagram/*.png
