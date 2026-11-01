@@ -61,9 +61,11 @@ interface Props {
   userId: string;
   nodeCount: number;
   graphEdgeCount: number;
+  /** While true (e.g. connect mode), no new tip is scheduled. */
+  paused?: boolean;
 }
 
-export function ContextualTip({ userId, nodeCount, graphEdgeCount }: Props) {
+export function ContextualTip({ userId, nodeCount, graphEdgeCount, paused = false }: Props) {
   const [activeTip, setActiveTip] = useState<TipDef | null>(null);
   const [visible, setVisible] = useState(false);
   const dismissTimerRef = useRef<number | null>(null);
@@ -83,7 +85,7 @@ export function ContextualTip({ userId, nodeCount, graphEdgeCount }: Props) {
   useEffect(() => {
     if (activeTip) return; // Don't change tip while one is showing
     // The welcome tour already covers the basics; tips only start after it.
-    if (shownThisVisit.current || !isOnboardingDone(userId)) return;
+    if (paused || shownThisVisit.current || !isOnboardingDone(userId)) return;
 
     const shown = getShownTips(userId);
     const tip = TIP_DEFS.find(
@@ -99,7 +101,7 @@ export function ContextualTip({ userId, nodeCount, graphEdgeCount }: Props) {
     }, delay);
 
     return () => window.clearTimeout(appearTimer);
-  }, [userId, nodeCount, graphEdgeCount, activeTip]);
+  }, [userId, nodeCount, graphEdgeCount, activeTip, paused]);
 
   // Auto-dismiss after 12 seconds
   useEffect(() => {

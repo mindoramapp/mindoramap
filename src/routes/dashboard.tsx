@@ -633,7 +633,7 @@ function DashboardPage() {
               <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                 <PlanUsageBadge />
                 {maps.length > 0 && (
-                  <label className="relative block min-w-0 flex-1 sm:min-w-[220px] sm:flex-none">
+                  <label className="relative order-last block w-full sm:order-none sm:w-auto sm:min-w-[220px]">
                     <Search
                       className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
                       size={16}
@@ -662,7 +662,7 @@ function DashboardPage() {
                 <button
                   type="button"
                   onClick={openNewMap}
-                  className="inline-flex items-center gap-2 rounded-xl bg-[image:var(--gradient-hero)] px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 pointer-coarse:min-h-11"
+                  className="ml-auto inline-flex items-center gap-2 rounded-xl bg-[image:var(--gradient-hero)] px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90 pointer-coarse:min-h-11 sm:ml-0"
                 >
                   <Plus size={18} /> Novo mapa
                 </button>

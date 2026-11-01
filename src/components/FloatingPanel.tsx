@@ -244,7 +244,7 @@ export function FloatingPanel({
         "z-20 overflow-hidden rounded-3xl border border-border bg-card text-card-foreground shadow-[var(--shadow-soft)]",
         mobile
           ? // Portrait: bottom sheet. Landscape phones (short screens): side sheet on the right.
-            "fixed inset-x-3 bottom-[max(1rem,env(safe-area-inset-bottom))] max-h-[72dvh] [@media(max-height:560px)]:inset-x-auto [@media(max-height:560px)]:bottom-3 [@media(max-height:560px)]:right-3 [@media(max-height:560px)]:top-3 [@media(max-height:560px)]:w-80 [@media(max-height:560px)]:max-h-none"
+            "fixed inset-x-3 bottom-[max(1rem,env(safe-area-inset-bottom))] max-h-[72dvh] [@media(max-height:560px)]:inset-x-auto [@media(max-height:560px)]:bottom-3 [@media(max-height:560px)]:right-3 [@media(max-height:560px)]:top-[calc(7.5rem+env(safe-area-inset-top))] [@media(max-height:560px)]:w-80 [@media(max-height:560px)]:max-h-none"
           : `absolute ${widthClassName}`,
         dragging && "select-none shadow-xl",
       )}

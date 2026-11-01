@@ -23,7 +23,7 @@ export function Header({ children }: { children?: React.ReactNode }) {
   };
 
   return (
-    <header className="relative z-30 flex h-[calc(3.5rem+env(safe-area-inset-top))] shrink-0 items-center gap-1 border-b border-border bg-card px-2 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-4">
+    <header className="relative z-40 flex h-[calc(3.5rem+env(safe-area-inset-top))] shrink-0 items-center gap-1 border-b border-border bg-card px-2 pt-[env(safe-area-inset-top)] sm:gap-3 sm:px-4">
       <Link
         to="/dashboard"
         className="flex shrink-0 items-center gap-2 font-semibold pointer-coarse:min-h-11 pointer-coarse:min-w-11"

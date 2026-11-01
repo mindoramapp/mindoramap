@@ -97,8 +97,10 @@ export function EditorMoreMenu() {
               className={ITEM}
             >
               <span className="text-muted-foreground">{item.icon}</span>
-              <span className="flex-1">{item.label}</span>
-              <span className="text-xs text-muted-foreground">{item.hint}</span>
+              <span className="flex flex-col py-1.5">
+                <span>{item.label}</span>
+                <span className="text-xs text-muted-foreground">{item.hint}</span>
+              </span>
             </button>
           ))}
 

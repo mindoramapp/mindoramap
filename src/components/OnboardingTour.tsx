@@ -110,8 +110,8 @@ export function OnboardingTour({ userId, onDone }: Props) {
     "absolute z-[51] w-[380px] max-w-[calc(100vw-32px)] rounded-3xl border border-border/60 bg-card p-6 shadow-2xl",
     "transition duration-300",
     current.placement === "below-header"
-      ? "left-1/2 -translate-x-1/2 top-36"
-      : "left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2",
+      ? "left-1/2 -translate-x-1/2 top-32 max-h-[calc(100dvh-9rem)] overflow-y-auto"
+      : "left-1/2 -translate-x-1/2 top-1/2 -translate-y-1/2 max-h-[calc(100dvh-2rem)] overflow-y-auto",
   );
 
   return (

@@ -1619,6 +1619,7 @@ function EditorInner({
           userId={userId}
           nodeCount={nodes.length}
           graphEdgeCount={edges.filter((e) => e.data?.kind === "graph").length}
+          paused={connectMode}
         />
       )}
 
