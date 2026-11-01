@@ -6,7 +6,8 @@ import reactRefresh from "eslint-plugin-react-refresh";
 import tseslint from "typescript-eslint";
 
 export default tseslint.config(
-  { ignores: ["dist", ".output", ".vinxi", "src/routeTree.gen.ts"] },
+  // divulgacao/brutos: raw recordings and a throwaway Chrome profile (its own JS files).
+  { ignores: ["dist", ".output", ".vinxi", "src/routeTree.gen.ts", "divulgacao/brutos"] },
   {
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
     files: ["**/*.{ts,tsx}"],
