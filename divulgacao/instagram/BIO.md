@@ -11,8 +11,10 @@
 
 Use palavras que as pessoas pesquisam, não só a marca:
 
-- **Mindora | Mapa mental e revisão** (recomendado)
-- Mindora · Mapas mentais para estudar
+O Instagram aceita menos de 30 caracteres neste campo.
+
+- **Mindora Mapa mental e revisão** (29, recomendado)
+- Mindora | Mapa mental (21)
 
 ## Bio (até 150 caracteres)
 
