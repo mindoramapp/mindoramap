@@ -8,15 +8,28 @@ Editor de mapas mentais com persistência no Supabase, publicado em
 React 19 · TanStack Router (hash history, rotas por arquivo em `src/routes`) · ReactFlow ·
 Zustand · Tailwind CSS 4 · Supabase (auth + banco).
 
-No editor: desfazer/refazer (Ctrl+Z / Ctrl+Shift+Z), exportação em PNG, SVG, Markdown e
-JSON, e importação de JSON pelo dashboard.
+**Interface (revisão de usabilidade de 01/11/2026, ver `docs/PLANO_USABILIDADE.md`):**
+
+- **Editor:** uma barra flutuante com desfazer/refazer (Ctrl+Z / Ctrl+Shift+Z), Árvore/Grafo,
+  Conectar, Organizar e Aparência. No topo ficam o nome do mapa (clique para renomear), o estado
+  do salvamento ("Salvando…", "Salvo" ou "guardado neste aparelho"), "Revisar" e o menu "⋯" com
+  exportação (PNG, SVG, Markdown, JSON), painéis, centralizar e "Atalhos e ajuda".
+- **Conta:** planos, tema, instalar app, painel admin e sair ficam no menu da conta (avatar).
+- **Meus mapas:** "Novo mapa" abre um único diálogo com nome opcional, modelo (Em branco,
+  Brainstorm, Estudo, Projeto) e "Importar arquivo". Cada cartão tem a estrela e o menu "⋯"
+  (Renomear, Mover para pasta, Excluir).
+- **Primeira visita:** tour de 3 passos; as dicas contextuais só começam depois dele, uma por
+  visita ao editor.
+- **Acesso:** "Esqueci minha senha" no login envia o e-mail de recuperação; o link abre
+  `#/reset-password`. A URL do site precisa estar em *Authentication → URL Configuration →
+  Redirect URLs* no Supabase.
 
 **Modo revisão** (botão "Revisar" no editor): cada ramo do mapa vira um cartão de estudo, com
 revisão espaçada. Tecla Espaço revela a resposta; 1, 2 e 3 avaliam. O progresso fica em
 `review_cards`, e o domínio do mapa aparece em %.
 
 **Celular e tablet:** em telas compactas (até 767 px de largura, ou até 560 px de altura no
-celular deitado), o editor mostra só desfazer/refazer e o menu "Mais" no topo, e uma barra
+celular deitado), o editor mostra a mesma barra de ferramentas só com ícones, e uma barra
 inferior com "+ Filho" e "+ Irmão" (também em tablets, por serem telas de toque). Os painéis
 viram gaveta inferior (em pé) ou lateral (deitado), e o mapa é enquadrado ao abrir.
 
@@ -31,7 +44,8 @@ mouse; as anotações aparecem no Modo Revisão e na exportação Markdown. Para
 campo "Rótulo" ou clique direito → "Renomear".
 
 **Painéis do editor:** arrastáveis abertos ou recolhidos, grudam nas bordas e cantos, podem ser
-fechados e reabertos pelo menu "Painéis" da barra; posição e visibilidade são lembradas.
+fechados e reabertos pelo menu "⋯" (seção "Painéis"); posição e visibilidade são lembradas. A
+ajuda começa fechada e abre em "⋯ → Atalhos e ajuda".
 
 **Desempenho:** aparelhos com pouca memória ou poucos núcleos, economia de dados, 2G ou
 "reduzir movimento" ativam o modo leve (`<html class="perf-lite">`): sem desfoque de fundo,
