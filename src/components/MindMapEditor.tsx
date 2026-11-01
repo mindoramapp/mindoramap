@@ -593,6 +593,10 @@ function EditorInner({
   const { theme: appTheme } = useTheme();
   const preset = presetById(presetId);
   const canvas = canvasColor(preset, appTheme === "dark");
+  // Focus dimming for nodes and lines outside the selection. White on white needs a milder fade
+  // than dark on dark, or the rest of the map disappears on the light theme.
+  const dimNode = appTheme === "dark" ? 0.35 : 0.65;
+  const dimEdge = appTheme === "dark" ? 0.3 : 0.5;
   // For event handlers registered once (the node context menu).
   const nodeStyleRef = useRef(nodeStyle);
   useEffect(() => {
@@ -616,12 +620,12 @@ function EditorInner({
               branches.get(node.id),
               plain ? { canvas } : undefined,
             ),
-            opacity: connectedSet && !connectedSet.has(node.id) ? 0.35 : 1,
+            opacity: connectedSet && !connectedSet.has(node.id) ? dimNode : 1,
             transition: "opacity 200ms ease",
           },
         };
       }),
-    [nodes, connectedSet, preset, branches, nodeStyle, canvas],
+    [nodes, connectedSet, preset, branches, nodeStyle, canvas, dimNode],
   );
 
   const styledEdges = useMemo(
@@ -652,12 +656,12 @@ function EditorInner({
               filter: "drop-shadow(0 0 3px var(--primary))",
               strokeWidth: Number(themed.strokeWidth ?? 2) + 1,
             }),
-            opacity: (selectedId && !involved) || (selectedEdgeId && !isSelected) ? 0.3 : 1,
+            opacity: (selectedId && !involved) || (selectedEdgeId && !isSelected) ? dimEdge : 1,
             transition: "opacity 200ms ease",
           },
         };
       }),
-    [edges, selectedId, selectedEdgeId, liteMode, preset, branches, edgeShape],
+    [edges, selectedId, selectedEdgeId, liteMode, preset, branches, edgeShape, dimEdge],
   );
 
   const selectedEdge = edges.find((edge) => edge.id === selectedEdgeId) ?? null;

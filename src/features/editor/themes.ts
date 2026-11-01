@@ -147,7 +147,7 @@ export function contrastRatio(a: string, b: string): number {
 
 /** Canvas color behind the nodes: the preset's, or the app's light/dark background. */
 export const canvasColor = (preset: Preset, appDark: boolean) =>
-  preset.canvas ?? (appDark ? "#0b1020" : "#f8fafc");
+  preset.canvas ?? (appDark ? "#0b1020" : "#f3f6fa");
 
 /**
  * Index of the top-level branch each node belongs to (the root's child it descends from), so
