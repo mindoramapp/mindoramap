@@ -1,7 +1,16 @@
 # Mindora
 
-Editor de mapas mentais com persistência no Supabase, publicado em
-[neoviewprime.github.io/mindoramap](https://neoviewprime.github.io/mindoramap/).
+Editor de mapas mentais com **revisão espaçada**: cada ramo do mapa vira um cartão de estudo.
+Funciona no celular, instala como app (PWA) e abre sem internet.
+
+**▶ Abrir:** [mindoramapp.github.io](https://mindoramapp.github.io/) · cadastro aberto e gratuito.
+
+| Destaques técnicos | |
+|---|---|
+| Front-end | React 19, TanStack Router com rotas por arquivo, ReactFlow, Zustand, Tailwind CSS 4 |
+| Back-end | Supabase (Auth + Postgres com RLS e migrações versionadas) |
+| Offline | Service worker com o "casco" em cache; dados nunca cacheados; salvamento local quando cai a rede |
+| Qualidade | TypeScript, ESLint, Vitest e deploy automático pelo GitHub Actions a cada push na `main` |
 
 ## Stack
 
